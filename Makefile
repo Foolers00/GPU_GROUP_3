@@ -1,4 +1,4 @@
-.PHONY: all lean
+.PHONY: all clean
 
 all: main.o general_functions.o dynamic_array.o
 	gcc -o prog main.o general_functions.o dynamic_array.o
