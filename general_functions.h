@@ -37,7 +37,7 @@ double distance(Line l, Point z);
 
 
 // returns the Point with maximal distance to the Line l
-Point max_distance(Line l, Point* point_array);
+Point max_distance(Line l, Point_array* points);
 
 
 // returns true if the Point z is above the Line l
