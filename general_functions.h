@@ -7,6 +7,16 @@
 #include <stdio.h>
 #endif
 
+#ifndef STDLIB
+#define STDLIB
+#include <stdlib.h>
+#endif
+
+#ifndef TIME
+#define TIME
+#include <time.h>
+#endif
+
 #ifndef BOOL
 #define BOOL
 #include <stdbool.h>
@@ -34,9 +44,9 @@ Point max_distance(Line l, Point* point_array);
 // and false if it is below
 bool check_above(Line l, Point z);
 
-// generates a Point array with random values from l_bound to u_bound
-// which is size big
-Point_array* generate_random_points(int size, double l_bound, double u_bound);
+// generates a Point array with random values from a lower bound(l_bound) to 
+// an upper bound(u_bound), init_point_array must be called before
+void generate_random_points(Point_array* points, double l_bound, double u_bound);
 
 
 // sets p(min x) and q(max x) to the two points from the array points that must be on the Hull

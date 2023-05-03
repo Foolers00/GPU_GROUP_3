@@ -17,6 +17,15 @@
 #include <string.h>
 #endif
 
+#ifndef DATA_TYPES
+#define DATA_TYPES
+#include "data_types.h"
+#endif
+
+// Initializes point array with the values size for curr_size
+// and max_size for the threshold to expand
+void init_point_array(Point_array* points, size_t curr_size, size_t max_size);
+
 // Adds a point z to the point array, resizes array if half is full
 void add_to_point_array(Point_array* points,  Point z);
 

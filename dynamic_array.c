@@ -15,6 +15,13 @@
 
 
 
+void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
+    points->curr_size = curr_size;
+    points->max_size = max_size;
+    points->index = 0;
+    points->array = NULL;
+}
+
 void add_to_point_array(Point_array* points,  Point z){
 
     if(points->curr_size > points->max_size/2){

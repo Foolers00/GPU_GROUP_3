@@ -19,6 +19,30 @@ bool check_above(Line l, Point z){
 }
 
 
+void generate_random_points(Point_array* points, double l_bound, double u_bound){
+
+    time_t t;
+    double difference = u_bound - l_bound;
+    double offset_x = 0;
+    double offset_y = 0;
+
+    srand((unsigned) time(&t));
+
+    points->array = (Point*)malloc(points->max_size*sizeof(Point));
+    if(points->array == NULL){
+        fprintf(stderr, "Malloc failed");
+    }
+
+    for(int i = 0; i < points->curr_size; i++){
+        offset_x = rand() % (int)difference;
+        offset_y = rand() % (int)difference;
+        points->array[i].x = l_bound + offset_x;
+        points->array[i].y = l_bound + offset_y;
+    }
+
+    points->index = points->curr_size;
+
+}
 
 
 void points_on_hull(Point_array* points, Point* p, Point* q){
