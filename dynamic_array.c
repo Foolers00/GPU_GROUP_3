@@ -20,6 +20,24 @@ void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
     points->max_size = max_size;
     points->index = 0;
     points->array = NULL;
+
+    points->array = (Point*)malloc(points->max_size*sizeof(Point));
+    if(points->array == NULL){
+        fprintf(stderr, "Malloc failed");
+    }
+}
+
+
+void init_hull(Hull* hull, size_t curr_size, size_t max_size){
+    hull->curr_size = curr_size;
+    hull->max_size = max_size;
+    hull->index = 0;
+    hull->array = NULL;
+    
+    hull->array = (Line*)malloc(hull->max_size*sizeof(Line));
+    if(hull->array == NULL){
+        fprintf(stderr, "Malloc failed");
+    }
 }
 
 void add_to_point_array(Point_array* points,  Point z){

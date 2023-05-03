@@ -28,11 +28,6 @@ void generate_random_points(Point_array* points, double l_bound, double u_bound)
 
     srand((unsigned) time(&t));
 
-    points->array = (Point*)malloc(points->max_size*sizeof(Point));
-    if(points->array == NULL){
-        fprintf(stderr, "Malloc failed");
-    }
-
     for(int i = 0; i < points->curr_size; i++){
         offset_x = rand() % (int)difference;
         offset_y = rand() % (int)difference;

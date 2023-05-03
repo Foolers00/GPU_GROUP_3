@@ -22,9 +22,13 @@
 #include "data_types.h"
 #endif
 
-// Initializes point array with the values size for curr_size
-// and max_size for the threshold to expand
+// Initializes the values size for curr_size, max_size for the threshold to expand 
+// and mallocs point array urr_size big 
 void init_point_array(Point_array* points, size_t curr_size, size_t max_size);
+
+// Initializes the values size for curr_size, max_size for the threshold to expand
+// and mallocs line array curr_size big 
+void init_hull(Hull* hull, size_t curr_size, size_t max_size);
 
 // Adds a point z to the point array, resizes array if half is full
 void add_to_point_array(Point_array* points,  Point z);
@@ -34,4 +38,3 @@ void add_to_hull(Hull* hull, Line l);
 
 // combines two hulls by creating new dynamic array
 Hull* combine_hull(Hull* hull_1, Hull* hull_2);
-
