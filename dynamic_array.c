@@ -22,7 +22,7 @@ void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
     points->array = NULL;
 
     points->array = (Point*)malloc(points->max_size*sizeof(Point));
-    if(points->array == NULL){
+    if(!points->array){
         fprintf(stderr, "Malloc failed");
     }
 }
@@ -35,7 +35,7 @@ void init_hull(Hull* hull, size_t curr_size, size_t max_size){
     hull->array = NULL;
     
     hull->array = (Line*)malloc(hull->max_size*sizeof(Line));
-    if(hull->array == NULL){
+    if(!hull->array){
         fprintf(stderr, "Malloc failed");
     }
 }
@@ -44,7 +44,7 @@ void add_to_point_array(Point_array* points,  Point z){
 
     if(points->curr_size > points->max_size/2){
         points->array = (Point*)realloc(points->array, points->max_size << 1);
-        if(points->array == NULL){
+        if(!points->array){
             fprintf(stderr, "Realloc failed");
             exit(1);
         }
@@ -64,7 +64,7 @@ void add_to_hull(Hull* hull, Line l){
 
     if(hull->curr_size > hull->max_size/2){
         hull->array = (Line*)realloc(hull->array, hull->max_size << 1);
-        if(hull->array == NULL){
+        if(!hull->array){
             fprintf(stderr, "Realloc failed");
             exit(1);
         }
