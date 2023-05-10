@@ -65,3 +65,17 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
     q->x = max.x;
     q->y = max.y;
 }
+
+// returns the Point with maximal distance to the Line l
+Point max_distance(Line l, Point_array* points){
+    double max = -1.0;
+    Point p;
+    for (int i = 0; i < points->curr_size; i++){
+        double dist = distance(l, points->array[i]);
+        if(dist > max){
+            max = dist;
+            p = points->array[i];
+        }
+    }
+    return p;
+}
