@@ -22,19 +22,45 @@
 #include "data_types.h"
 #endif
 
-// Initializes the values size for curr_size, max_size for the threshold to expand 
-// and mallocs point array urr_size big 
+/*
+    Initializes the values size for curr_size, max_size/2 for the threshold to expand 
+    and mallocs point array urr_size big 
+*/
 void init_point_array(Point_array* points, size_t curr_size, size_t max_size);
 
-// Initializes the values size for curr_size, max_size for the threshold to expand
-// and mallocs line array curr_size big 
+/* 
+    Initializes the values size for curr_size, max_size/2 for the threshold to expand
+    and mallocs line array curr_size big 
+*/
 void init_hull(Hull* hull, size_t curr_size, size_t max_size);
 
-// Adds a point z to the point array, resizes array if half is full
+/*
+    Adds a point z to the point array, resizes array if half is full
+*/
 void add_to_point_array(Point_array* points,  Point z);
 
-// Adds line l to the hull, resizes array if half is full
+/*
+    Adds line l to the hull, resizes array if half is full
+*/
 void add_to_hull(Hull* hull, Line l);
 
-// combines two hulls by creating new dynamic array
+/*
+    combines two hulls by creating new dynamic array
+*/
 Hull* combine_hull(Hull* hull_1, Hull* hull_2);
+
+/*
+    frees the array inside points and then points itself
+*/
+void free_point_array(Point_array* points){
+    free(points->array);
+    free(points);
+}
+
+/*
+    frees the array inside hull and then hull itself
+*/
+void free_hull(Hull* hull){
+    free(hull->array);
+    free(hull);
+}
