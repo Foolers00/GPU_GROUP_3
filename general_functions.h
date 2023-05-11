@@ -32,6 +32,11 @@
 #include "data_types.h"
 #endif
 
+#ifndef DYNAMIC_ARRAY
+#define DYNAMIC_ARRAY
+#include "dynamic_array.h"
+#endif
+
 /*
     calculates the hull for the poitns in Point_array
 */

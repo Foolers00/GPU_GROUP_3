@@ -2,12 +2,6 @@
 /* DYNAMIC ARRAY */
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DATA_TYPES
-#define DATA_TYPES
-#include "data_types.h"
-#endif
-
-
 #ifndef DYNAMIC_ARRAY
 #define DYNAMIC_ARRAY
 #include "dynamic_array.h"
@@ -106,7 +100,19 @@ Hull* combine_hull(Hull* hull_1, Hull* hull_2){
 
     free_hull(hull_1);
     free_hull(hull_2);
-    
+
     return new_hull;
 
+}
+
+
+void free_point_array(Point_array* points){
+    free(points->array);
+    free(points);
+}
+
+
+void free_hull(Hull* hull){
+    free(hull->array);
+    free(hull);
 }

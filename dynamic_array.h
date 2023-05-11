@@ -52,15 +52,9 @@ Hull* combine_hull(Hull* hull_1, Hull* hull_2);
 /*
     frees the array inside points and then points itself
 */
-void free_point_array(Point_array* points){
-    free(points->array);
-    free(points);
-}
+void free_point_array(Point_array* points);
 
 /*
     frees the array inside hull and then hull itself
 */
-void free_hull(Hull* hull){
-    free(hull->array);
-    free(hull);
-}
+void free_hull(Hull* hull);
