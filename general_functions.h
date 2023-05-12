@@ -66,10 +66,11 @@ Point max_distance(Line l, Point_array* points);
 
 
 /*
-    returns true if the Point z is above the Line l
-    and false if it is below
+    returns ABOVE if the Point z is above the Line l,
+    ON if it is one the Line l and BELOW if is is below
+    the Line l
 */
-bool check_above(Line l, Point z);
+int check_point_location(Line l, Point z);
 
 /*
     generates a Point array with random values from a lower bound(l_bound) to 

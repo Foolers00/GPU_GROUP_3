@@ -19,8 +19,8 @@ Hull* quickhull(Point_array* points){
     points_on_hull(points, &p, &q);
     l_pq = calc_line(p, q);
 
-    hull_up = quickhull_split(points, l_pq, UP);
-    hull_down = quickhull_split(points, l_pq, DOWN);
+    hull_up = quickhull_split(points, l_pq, ABOVE);
+    hull_down = quickhull_split(points, l_pq, BELOW);
 
     return combine_hull(hull_up, hull_down);
 
@@ -50,8 +50,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
     init_point_array(points_down, 0, points->max_size/2);
 
     for(int i = 0; i < points->curr_size; i++){
-        bool result = check_above(l, points->array[i]);
-        if(result != side){
+        int result = check_point_location(l, points->array[i]);
+        if(result == ON || result != side){
             continue;
         }
 
@@ -69,8 +69,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         l_p_up = calc_line(l.p, max_up);
         l_q_up = calc_line(l.q, max_up);
         hull_up = combine_hull(
-                quickhull_split(points_up, l_p_up, UP), 
-                quickhull_split(points_up, l_q_up, UP)
+                quickhull_split(points_up, l_p_up, ABOVE), 
+                quickhull_split(points_up, l_q_up, ABOVE)
                 );
     }
     else{
@@ -84,8 +84,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         l_p_down = calc_line(l.p, max_down);
         l_p_down = calc_line(l.q, max_down);
         hull_down = combine_hull(
-                    quickhull_split(points_up, l_p_down, DOWN), 
-                    quickhull_split(points_up, l_q_down, DOWN)
+                    quickhull_split(points_up, l_p_down, BELOW), 
+                    quickhull_split(points_up, l_q_down, BELOW)
                     );
     }
     else{
@@ -119,12 +119,15 @@ Line calc_line(Point p, Point q){
 
 }
 
-bool check_above(Line l, Point z){
+int check_point_location(Line l, Point z){
 
     if(l.k*z.x+l.d < z.y){
-        return true;
+        return 1;
     }
-    return false;
+    if(l.k*z.x+l.d == z.y){
+        return 0;
+    }
+    return -1;
 
 }
 

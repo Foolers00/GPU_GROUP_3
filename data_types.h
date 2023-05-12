@@ -8,8 +8,10 @@
 #endif
 
 
-#define UP 1
-#define DOWN 0
+#define ABOVE 1
+#define ON 0
+#define BELOW -1
+
 
 
 
