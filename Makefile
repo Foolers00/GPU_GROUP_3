@@ -1,10 +1,10 @@
 .PHONY: all clean
 
 all: main.o general_functions.o dynamic_array.o
-	gcc -o prog main.o general_functions.o dynamic_array.o
+	gcc -o prog main.o general_functions.o dynamic_array.o -lm
 
 
-main.o: main.c data_types.h general_functions.h dynamic_array.h 
+main.o: main.c data_types.h general_functions.h dynamic_array.h
 	gcc -c main.c
 
 
