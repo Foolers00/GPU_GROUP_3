@@ -2,12 +2,6 @@
 /* DYNAMIC ARRAY */
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef DATA_TYPES
-#define DATA_TYPES
-#include "data_types.h"
-#endif
-
-
 #ifndef DYNAMIC_ARRAY
 #define DYNAMIC_ARRAY
 #include "dynamic_array.h"
@@ -16,6 +10,7 @@
 
 
 void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
+    
     points->curr_size = curr_size;
     points->max_size = max_size;
     points->index = 0;
@@ -25,10 +20,12 @@ void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
     if(!points->array){
         fprintf(stderr, "Malloc failed");
     }
+
 }
 
 
 void init_hull(Hull* hull, size_t curr_size, size_t max_size){
+    
     hull->curr_size = curr_size;
     hull->max_size = max_size;
     hull->index = 0;
@@ -38,6 +35,7 @@ void init_hull(Hull* hull, size_t curr_size, size_t max_size){
     if(!hull->array){
         fprintf(stderr, "Malloc failed");
     }
+
 }
 
 void add_to_point_array(Point_array* points,  Point z){
@@ -57,6 +55,7 @@ void add_to_point_array(Point_array* points,  Point z){
 
     points->index++;
     points->curr_size++;
+
 }
 
 
@@ -82,6 +81,7 @@ void add_to_hull(Hull* hull, Line l){
 
 
 Hull* combine_hull(Hull* hull_1, Hull* hull_2){
+
     Hull* new_hull = (Hull*)malloc(sizeof(Hull));
 
     new_hull->curr_size = hull_1->curr_size+hull_2->curr_size;
@@ -98,6 +98,21 @@ Hull* combine_hull(Hull* hull_1, Hull* hull_2){
     memcpy(new_hull->array, hull_1->array, hull_1->curr_size);
     memcpy(&new_hull->array[hull_1->curr_size], hull_2->array, hull_2->curr_size);
 
+    free_hull(hull_1);
+    free_hull(hull_2);
+
     return new_hull;
 
+}
+
+
+void free_point_array(Point_array* points){
+    free(points->array);
+    free(points);
+}
+
+
+void free_hull(Hull* hull){
+    free(hull->array);
+    free(hull);
 }
