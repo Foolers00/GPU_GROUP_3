@@ -9,9 +9,9 @@
 
 
 
-void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
+void init_point_array(Point_array* points, size_t max_size){
     
-    points->curr_size = curr_size;
+    points->curr_size = 0;
     points->max_size = max_size;
     points->index = 0;
     points->array = NULL;
@@ -24,9 +24,9 @@ void init_point_array(Point_array* points, size_t curr_size, size_t max_size){
 }
 
 
-void init_hull(Hull* hull, size_t curr_size, size_t max_size){
+void init_hull(Hull* hull, size_t max_size){
     
-    hull->curr_size = curr_size;
+    hull->curr_size = 0;
     hull->max_size = max_size;
     hull->index = 0;
     hull->array = NULL;
@@ -115,4 +115,13 @@ void free_point_array(Point_array* points){
 void free_hull(Hull* hull){
     free(hull->array);
     free(hull);
+}
+
+
+void print_point_array(Point_array* points){
+    fprintf(stdout, "Data: ");
+    for(int i = 0; i < points->curr_size-1; i++){
+        fprintf(stdout, "(%lf,%lf), ", points->array[i].x, points->array[i].y);
+    }
+    fprintf(stdout, "(%lf,%lf), ", points->array[points->curr_size-1].x, points->array[points->curr_size-1].y);
 }

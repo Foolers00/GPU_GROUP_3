@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////////
-/* MAIN */
+/* TEST_PY */
 /////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef STDIO
@@ -33,16 +33,7 @@
 #include "dynamic_array.h"
 #endif
 
-#ifndef TEST
-#define TEST
-#include "test.h"
-#endif
 
+Point_array* test_sequence_1();
 
-
-int main(){
-    //Point_array* points = test_sequence_1();
-    Point_array* points = test_sequence_1();
-    print_point_array(points);
-    return 0;
-}
+Point* test_sequence_2();

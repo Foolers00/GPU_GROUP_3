@@ -26,13 +26,13 @@
     Initializes the values size for curr_size, max_size/2 for the threshold to expand 
     and mallocs point array urr_size big 
 */
-void init_point_array(Point_array* points, size_t curr_size, size_t max_size);
+void init_point_array(Point_array* points, size_t max_size);
 
 /* 
     Initializes the values size for curr_size, max_size/2 for the threshold to expand
     and mallocs line array curr_size big 
 */
-void init_hull(Hull* hull, size_t curr_size, size_t max_size);
+void init_hull(Hull* hull, size_t max_size);
 
 /*
     Adds a point z to the point array, resizes array if half is full
@@ -58,3 +58,9 @@ void free_point_array(Point_array* points);
     frees the array inside hull and then hull itself
 */
 void free_hull(Hull* hull);
+
+
+/*
+    prints the values in the Point_array points
+*/
+void print_point_array(Point_array* points);

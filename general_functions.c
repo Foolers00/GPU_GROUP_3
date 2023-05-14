@@ -40,14 +40,14 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
 
     // recursive abortion condition if 1
     if(points->curr_size == 1){
-        init_hull(hull_up, 0, 4);
+        init_hull(hull_up, 4);
         add_to_hull(hull_up, calc_line(l.p, points->array[0]));
         add_to_hull(hull_up, calc_line(l.q, points->array[0]));
         return hull_up;
     }
 
-    init_point_array(points_up, 0, points->max_size/2);
-    init_point_array(points_down, 0, points->max_size/2);
+    init_point_array(points_up, points->max_size/2);
+    init_point_array(points_down, points->max_size/2);
 
     for(int i = 0; i < points->curr_size; i++){
         int result = check_point_location(l, points->array[i]);
@@ -74,7 +74,7 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
                 );
     }
     else{
-        init_hull(hull_up, 0, 2);
+        init_hull(hull_up, 2);
         add_to_hull(hull_up, l);
     }
 
@@ -89,7 +89,7 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
                     );
     }
     else{
-        init_hull(hull_down, 0, 2);
+        init_hull(hull_down, 2);
         add_to_hull(hull_down, l);
     }
 
@@ -179,6 +179,11 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
     q->x = max.x;
     q->y = max.y;
 
+}
+
+
+double distance(Line l, Point z){
+    return 0;
 }
 
 // returns the Point with maximal distance to the Line l
