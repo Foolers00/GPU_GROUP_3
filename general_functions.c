@@ -189,7 +189,7 @@ double distance(Line l, Point z){
     double c = l.d;
     if (a == 0 && b == 0) {
         fprintf(stderr, "distance cannot be calculated for illegal line equation.");
-        exit -1;
+        exit(-1);
     }else{
         return fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b *b );
     }
