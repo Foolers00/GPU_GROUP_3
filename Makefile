@@ -3,7 +3,7 @@
 CC=gcc -g -Wall
 
 all: main.o general_functions.o dynamic_array.o libtest.so
-	$(CC) -o prog main.o general_functions.o dynamic_array.o test.o
+	$(CC) -o -lm prog main.o general_functions.o dynamic_array.o test.o 
 
 
 main.o: main.c test.h data_types.h general_functions.h dynamic_array.h 

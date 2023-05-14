@@ -6,6 +6,7 @@
 #ifndef GENERAL_FUNCTIONS
 #define GENERAL_FUNCTIONS
 #include "general_functions.h"
+#include <math.h>
 #endif
 
 Hull* quickhull(Point_array* points){
@@ -181,9 +182,17 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
 
 }
 
-
+// calculates the minimal distance from a Point z to the Line l
 double distance(Line l, Point z){
-    return 0;
+    double a = l.k;
+    double b = -1.0;
+    double c = l.d;
+    if (a == 0 && b == 0) {
+        fprintf(stderr, "distance cannot be calculated for illegal line equation.");
+        exit -1;
+    }else{
+        return fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b *b );
+    }
 }
 
 // returns the Point with maximal distance to the Line l
@@ -201,3 +210,4 @@ Point max_distance(Line l, Point_array* points){
     return p;
 
 }
+
