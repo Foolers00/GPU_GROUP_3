@@ -23,16 +23,17 @@
 #endif
 
 /*
-    Initializes the values size for curr_size, max_size/2 for the threshold to expand 
-    and mallocs point array urr_size big 
+    Returns malloced point array and initializes the values size for curr_size, 
+    max_size/2 for the threshold to expand and mallocs array inside point array 
+    with max_size size 
 */
-void init_point_array(Point_array* points, size_t max_size);
+Point_array* init_point_array(size_t max_size);
 
 /* 
-    Initializes the values size for curr_size, max_size/2 for the threshold to expand
-    and mallocs line array curr_size big 
+    Returns malloced Hull and initializes the values size for curr_size, max_size/2 
+    for the threshold to expand and mallocs line array curr_size big 
 */
-void init_hull(Hull* hull, size_t max_size);
+Hull* init_hull(size_t max_size);
 
 /*
     Adds a point z to the point array, resizes array if half is full

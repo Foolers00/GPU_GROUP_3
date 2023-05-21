@@ -26,14 +26,20 @@ typedef struct Point{
 
 /*
     Structure to represent the line between two points
-    y = kx+d and p, q are on the line
+    p, q are on the line and v shows the orientation
 */
 typedef struct Line{
     Point p;
-    Point q; 
-    double k;
-    double d;
+    Point q;
 }Line;
+
+/*
+    Structure to represent the Vector between two points
+*/
+typedef struct Vector{
+    double _x;
+    double _y;
+}Vector;
 
 
 /*
@@ -43,7 +49,6 @@ typedef struct Point_array{
     Point* array;
     size_t curr_size;
     size_t max_size;
-    int index;
 }Point_array;
 
 
@@ -54,5 +59,4 @@ typedef struct Hull{
     Line* array;
     size_t curr_size;
     size_t max_size;
-    int index;
 }Hull;

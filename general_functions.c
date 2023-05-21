@@ -6,7 +6,6 @@
 #ifndef GENERAL_FUNCTIONS
 #define GENERAL_FUNCTIONS
 #include "general_functions.h"
-#include <math.h>
 #endif
 
 Hull* quickhull(Point_array* points){
@@ -18,7 +17,7 @@ Hull* quickhull(Point_array* points){
     Hull* hull_down = NULL;
 
     points_on_hull(points, &p, &q);
-    l_pq = calc_line(p, q);
+    l_pq = (Line) { .p = p, .q = q };
 
     hull_up = quickhull_split(points, l_pq, ABOVE);
     hull_down = quickhull_split(points, l_pq, BELOW);
@@ -27,28 +26,23 @@ Hull* quickhull(Point_array* points){
 
 }
 
+
 Hull* quickhull_split(Point_array* points, Line l, int side){
-    Point_array* points_up = NULL;
-    Point_array* points_down = NULL;
-    Point max_up;
-    Point max_down;
-    Line l_p_up;
-    Line l_q_up;
-    Line l_p_down;
-    Line l_q_down;
-    Hull* hull_up = NULL;
-    Hull* hull_down = NULL;
+    Point_array* points_side = NULL;
+    Point max_point;
+    Line l_p_max;
+    Line l_max_q;
+    Hull* hull_side = NULL;
 
     // recursive abortion condition if 1
     if(points->curr_size == 1){
-        init_hull(hull_up, 4);
-        add_to_hull(hull_up, calc_line(l.p, points->array[0]));
-        add_to_hull(hull_up, calc_line(l.q, points->array[0]));
-        return hull_up;
+        hull_side = init_hull(4);
+        add_to_hull(hull_side, (Line) { .p = l.p, .q = points->array[0] });
+        add_to_hull(hull_side, (Line) { .p = l.q, .q = points->array[0] });
+        return hull_side;
     }
 
-    init_point_array(points_up, points->max_size/2);
-    init_point_array(points_down, points->max_size/2);
+    points_side = init_point_array(points->max_size/2);
 
     for(int i = 0; i < points->curr_size; i++){
         int result = check_point_location(l, points->array[i]);
@@ -57,78 +51,55 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         }
 
         if(side){
-            add_to_point_array(points_up, points->array[i]);
-        }
-        else{
-            add_to_point_array(points_down, points->array[i]);
+            add_to_point_array(points_side, points->array[i]);
         }
     }
 
     // recursive abortion condition if 0
-    if(points_up->curr_size){
-        max_up = max_distance(l, points_up);
-        l_p_up = calc_line(l.p, max_up);
-        l_q_up = calc_line(l.q, max_up);
-        hull_up = combine_hull(
-                quickhull_split(points_up, l_p_up, ABOVE), 
-                quickhull_split(points_up, l_q_up, ABOVE)
+    if(points_side->curr_size){
+        max_point = max_distance(l, points_side);
+        l_p_max = (Line) { .p = l.p, .q = max_point };
+        l_max_q = (Line) { .p = max_point, .q = l.q };
+        hull_side = combine_hull(
+                quickhull_split(points_side, l_p_max, ABOVE), 
+                quickhull_split(points_side, l_max_q, ABOVE)
                 );
     }
     else{
-        init_hull(hull_up, 2);
-        add_to_hull(hull_up, l);
+        hull_side = init_hull(2);
+        add_to_hull(hull_side, l);
     }
 
+    free_point_array(points_side);
 
-    if(points_down->curr_size){
-        max_down = max_distance(l, points_down);
-        l_p_down = calc_line(l.p, max_down);
-        l_p_down = calc_line(l.q, max_down);
-        hull_down = combine_hull(
-                    quickhull_split(points_up, l_p_down, BELOW), 
-                    quickhull_split(points_up, l_q_down, BELOW)
-                    );
-    }
-    else{
-        init_hull(hull_down, 2);
-        add_to_hull(hull_down, l);
-    }
-
-    free_point_array(points_up);
-    free_point_array(points_down);
-
-    return combine_hull(hull_up, hull_down);
+    return hull_side;
 
 }
 
 
-Line calc_line(Point p, Point q){
+Line init_line(Point p, Point q){
 
-    double k;
-    double d;
     Line l;
-
-    k = (p.y-q.y)/(p.x-q.x);
-    d = p.y - k*p.x;
 
     l.p = p;
     l.q = q;
-    l.k = k;
-    l.d = d;
 
     return l;
 
 }
 
+
 int check_point_location(Line l, Point z){
 
-    if(l.k*z.x+l.d < z.y){
-        return 1;
+    double result = cross_product(init_vector(l.p, l.q), init_vector(l.p, z));
+
+    if(result>0){
+        return ABOVE;
     }
-    if(l.k*z.x+l.d == z.y){
-        return 0;
+    if(result == 0){
+        return ON;
     }
-    return -1;
+    return BELOW;
 
 }
 
@@ -145,11 +116,8 @@ void generate_random_points(Point_array* points, double l_bound, double u_bound)
     for(int i = 0; i < points->curr_size; i++){
         offset_x = rand() % (int)difference;
         offset_y = rand() % (int)difference;
-        points->array[i].x = l_bound + offset_x;
-        points->array[i].y = l_bound + offset_y;
+        add_to_point_array(points, (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y});
     }
-
-    points->index = points->curr_size;
 
 }
 
@@ -183,19 +151,40 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
 }
 
 // calculates the minimal distance from a Point z to the Line l
+// double distance(Line l, Point z){
+//     double a = l.k;
+//     double b = -1.0;
+//     double c = l.d;
+//     if (a == 0 && b == 0) {
+//         fprintf(stderr, "distance cannot be calculated for illegal line equation.");
+//         exit(-1);
+//     }else{
+//         return fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b *b );
+//     }
+// }
+
 double distance(Line l, Point z){
-    double a = l.k;
-    double b = -1.0;
-    double c = l.d;
-    if (a == 0 && b == 0) {
-        fprintf(stderr, "distance cannot be calculated for illegal line equation.");
-        exit(-1);
-    }else{
-        return fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b *b );
-    }
+    
+    Vector v_p_z;
+    Vector v_p_q;
+    double t1, t2, t3, t4;
+
+    v_p_z = init_vector(l.p, z);
+    v_p_q = init_vector(l.p, l.q);
+
+    t1 = vector_multiply(v_p_z, v_p_q);
+    t2 = vector_abs(v_p_q);
+    t3 = pow(t2,2);
+    t4 = t1/t3;
+
+
+
+    return vector_abs(vector_minus(v_p_z, vector_scale(v_p_q, t4)));
+    
+    
 }
 
-// returns the Point with maximal distance to the Line l
+
 Point max_distance(Line l, Point_array* points){
 
     double max = -1.0;

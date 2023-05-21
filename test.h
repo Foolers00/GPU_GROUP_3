@@ -34,6 +34,13 @@
 #endif
 
 
-Point_array* test_sequence_1();
 
-Point* test_sequence_2();
+Point* test_sequence_1();
+
+Point_array* test_sequence_2();
+
+Hull* test_sequence_3();
+
+Point_array* test_sequence_4_1();
+
+Hull* test_sequence_4_2(Point_array* points);

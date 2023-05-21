@@ -37,6 +37,17 @@
 #include "dynamic_array.h"
 #endif
 
+#ifndef MATH
+#define MATH
+#include <math.h>
+#endif
+
+#ifndef VECTOR
+#define VECTOR
+#include "vector.h"
+#endif
+
+
 /*
     calculates the hull for the poitns in Point_array
 */
@@ -51,7 +62,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side);
 /*
     calculates line which is made up of points p and q
 */
-Line calc_line(Point p, Point q);
+Line init_line(Point p, Point q);
+
 
 /*
     calculates the minimal distance from a Point z to the Line l 
@@ -72,6 +84,8 @@ Point max_distance(Line l, Point_array* points);
 */
 int check_point_location(Line l, Point z);
 
+
+
 /*
     generates a Point array with random values from a lower bound(l_bound) to 
     an upper bound(u_bound), init_point_array must be called before
@@ -83,3 +97,5 @@ void generate_random_points(Point_array* points, double l_bound, double u_bound)
     sets p(min x) and q(max x) to the two points from the array points that must be on the Hull
 */
 void points_on_hull(Point_array* points, Point* p, Point* q);
+
+
