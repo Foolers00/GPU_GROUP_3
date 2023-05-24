@@ -56,7 +56,7 @@ class Hull(ctypes.Structure):
 
 
 
-turtle.speed(1)
+turtle.speed(1000)
 turtle.penup()
 turtle.screensize(canvwidth, canvheight, bg="white")
 
@@ -70,6 +70,9 @@ my_functions.test_sequence_3.restype = ctypes.POINTER(Hull)
 my_functions.test_sequence_4_1.restype = ctypes.POINTER(Point_array)
 my_functions.test_sequence_4_2.argtypes = [ctypes.POINTER(Point_array)]
 my_functions.test_sequence_4_2.restype = ctypes.POINTER(Hull)
+my_functions.test_random_generate.restype = ctypes.POINTER(Point_array)
+my_functions.test_random_generate.restype = ctypes.POINTER(Point_array)
+my_functions.test_random_hull.restype = ctypes.POINTER(Hull)
 
 
 ### test_sequence_2 ###
@@ -84,10 +87,11 @@ my_functions.test_sequence_4_2.restype = ctypes.POINTER(Hull)
 #     draw_line(hull.contents.array[i])
 
 ### test_sequence_4 ###
-points = my_functions.test_sequence_4_1()
+points = my_functions.test_random_generate()
 for i in range (points.contents.curr_size):
     draw_point(points.contents.array[i])
 hull = my_functions.test_sequence_4_2(points)
+#turtle.speed(1)
 for i in range (hull.contents.curr_size):
     draw_line(hull.contents.array[i])
 

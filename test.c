@@ -112,3 +112,12 @@ Hull* test_sequence_4_2(Point_array* points){
     return quickhull(points);
 
 }
+
+Point_array* test_random_generate(){
+    Point_array* points = generate_random_points(50, 0, 400);
+    return points;
+}
+
+Hull* test_random_hull(Point_array* points){
+    return quickhull(points);
+}

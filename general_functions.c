@@ -104,21 +104,22 @@ int check_point_location(Line l, Point z){
 }
 
 
-void generate_random_points(Point_array* points, double l_bound, double u_bound){
+Point_array* generate_random_points(int num_of_points, double l_bound, double u_bound){
 
     time_t t;
     double difference = u_bound - l_bound;
     double offset_x = 0;
     double offset_y = 0;
-
     srand((unsigned) time(&t));
 
-    for(int i = 0; i < points->curr_size; i++){
+    Point_array* points = init_point_array(num_of_points * 2);
+    for(size_t i = 0; i < num_of_points; i++){
         offset_x = rand() % (int)difference;
         offset_y = rand() % (int)difference;
         add_to_point_array(points, (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y});
     }
 
+    return points;
 }
 
 

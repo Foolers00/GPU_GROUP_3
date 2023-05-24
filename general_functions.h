@@ -90,7 +90,7 @@ int check_point_location(Line l, Point z);
     generates a Point array with random values from a lower bound(l_bound) to 
     an upper bound(u_bound), init_point_array must be called before
 */
-void generate_random_points(Point_array* points, double l_bound, double u_bound);
+Point_array* generate_random_points(int num_of_points, double l_bound, double u_bound);
 
 
 /*
