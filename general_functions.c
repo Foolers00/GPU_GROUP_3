@@ -61,8 +61,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         l_p_max = (Line) { .p = l.p, .q = max_point };
         l_max_q = (Line) { .p = max_point, .q = l.q };
         hull_side = combine_hull(
-                quickhull_split(points_side, l_p_max, ABOVE), 
-                quickhull_split(points_side, l_max_q, ABOVE)
+                quickhull_split(points_side, l_p_max, side), 
+                quickhull_split(points_side, l_max_q, side)
                 );
     }
     else{
