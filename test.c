@@ -114,7 +114,7 @@ Hull* test_sequence_4_2(Point_array* points){
 }
 
 Point_array* test_random_generate(){
-    Point_array* points = generate_random_points(50, 0, 400);
+    Point_array* points = generate_random_points(15, -200, 800);
     return points;
 }
 

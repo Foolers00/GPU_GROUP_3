@@ -34,14 +34,6 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
     Line l_max_q;
     Hull* hull_side = NULL;
 
-    // recursive abortion condition if 1
-    if(points->curr_size == 1){
-        hull_side = init_hull(4);
-        add_to_hull(hull_side, (Line) { .p = l.p, .q = points->array[0] });
-        add_to_hull(hull_side, (Line) { .p = l.q, .q = points->array[0] });
-        return hull_side;
-    }
-
     points_side = init_point_array(points->max_size/2);
 
     for(int i = 0; i < points->curr_size; i++){
@@ -55,23 +47,25 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         }
     }
 
-    // recursive abortion condition if 0
-    if(points_side->curr_size){
-        max_point = max_distance(l, points_side);
-        l_p_max = (Line) { .p = l.p, .q = max_point };
-        l_max_q = (Line) { .p = max_point, .q = l.q };
-        hull_side = combine_hull(
-                quickhull_split(points_side, l_p_max, side), 
-                quickhull_split(points_side, l_max_q, side)
-                );
-    }
-    else{
+    max_point = max_distance(l, points_side);
+    l_p_max = (Line) { .p = l.p, .q = max_point };
+    l_max_q = (Line) { .p = max_point, .q = l.q };
+
+    if(points_side->curr_size == 0) {
         hull_side = init_hull(2);
         add_to_hull(hull_side, l);
+    }else if(points_side->curr_size == 1){
+        hull_side = init_hull(4);
+        add_to_hull(hull_side, l_p_max);
+        add_to_hull(hull_side, l_max_q);
+    }else {
+        //points_side->curr_size > 1
+        hull_side = combine_hull(
+                quickhull_split(points_side, l_p_max, side),
+                quickhull_split(points_side, l_max_q, side)
+        );
     }
-
     free_point_array(points_side);
-
     return hull_side;
 
 }

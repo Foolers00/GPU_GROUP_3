@@ -42,27 +42,29 @@
 
 int main(){
 
-    Point x1,x2,x3,x4;
-    Line l;
-    l.p = (Point) {-2,-2};
-    l.q = (Point) {5, 4};
-    x1 = (Point) {1.0, 3.0};
-    x2 = (Point) {4.0, 0.0};
-    x3 = (Point) {2.0,2.0};
-    x4 = (Point) {2.0, 5.0};
-
-    Point_array* points = init_point_array(8);
-    add_to_point_array(points, x1);
-    add_to_point_array(points, x2);
-    add_to_point_array(points, x3);
-    add_to_point_array(points, x4);
-
-    for (int i = 0; i < 4; i++) {
-        printf("Location of x_%i: %s\n", i+1,
-               check_point_location(l, points->array[i]) == ABOVE ? "ABOVE" : check_point_location(l, points->array[i]) == ON ? "ON"
-                                                                                                              : "BELOW");
-        printf("Distance of x_%i to l: %f\n", i+1, distance(l, points->array[i]));
-    }
-    printf("point of maximal distance: (%f, %f)\n", max_distance(l, points).x, max_distance(l, points).y);
+//    Point x1,x2,x3,x4;
+//    Line l;
+//    l.p = (Point) {-2,-2};
+//    l.q = (Point) {5, 4};
+//    x1 = (Point) {1.0, 3.0};
+//    x2 = (Point) {4.0, 0.0};
+//    x3 = (Point) {2.0,2.0};
+//    x4 = (Point) {2.0, 5.0};
+//
+//    Point_array* points = init_point_array(8);
+//    add_to_point_array(points, x1);
+//    add_to_point_array(points, x2);
+//    add_to_point_array(points, x3);
+//    add_to_point_array(points, x4);
+//
+//    for (int i = 0; i < 4; i++) {
+//        printf("Location of x_%i: %s\n", i+1,
+//               check_point_location(l, points->array[i]) == ABOVE ? "ABOVE" : check_point_location(l, points->array[i]) == ON ? "ON"
+//                                                                                                              : "BELOW");
+//        printf("Distance of x_%i to l: %f\n", i+1, distance(l, points->array[i]));
+//    }
+//    printf("point of maximal distance: (%f, %f)\n", max_distance(l, points).x, max_distance(l, points).y);
+    Point_array* points = test_sequence_4_1();// generate_random_points(8, -200, 800);
+    Hull* hull = quickhull(points);
     return 0;
 }
