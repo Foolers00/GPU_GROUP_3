@@ -43,7 +43,7 @@ int main(){
     //test_sequence_2();
     //test_sequence_5();
 
-    test_max_distance_cuda();
+    test_minmax_cuda();
 
     return 0;
 }

@@ -2,8 +2,8 @@
 /* MAX DISTANCE CUDA */
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PREFIX
-#define PREFIX
+#ifndef MAX_DISTANCE
+#define MAX_DISTANCE
 #include "max_distance.h"
 #endif
 

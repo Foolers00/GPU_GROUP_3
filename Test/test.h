@@ -43,6 +43,10 @@
 #include "../Parallel/max_distance.h"
 #endif
 
+#ifndef MINMAX
+#define MINMAX
+#include "../Parallel/minmax.h"
+#endif
 
 
 
@@ -78,5 +82,10 @@ void compare_prescan_exclusive(unsigned long long int *h_data, unsigned long lon
  * tests the max_distance calculation
  */
 void test_max_distance_cuda();
+
+/*
+ * tests the minmax calculation
+ */
+void test_minmax_cuda();
 
 void printData(unsigned long long int *data, const size_t size);
