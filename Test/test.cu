@@ -264,3 +264,24 @@ void test_sequence_5(){
     
 
 }
+
+void test_max_distance_cuda(){
+    int size = 10000000;
+
+    Point_array* points = init_point_array(size);
+
+    Point near = (Point){.x = 1, .y = 2};
+    Point far = (Point){.x = 1, .y = 8};
+    Line l = (Line){.p = (Point){.x = 0, .y = 0}, .q = (Point){.x = 1, .y = 1}};
+
+    for(int i = 0; i < size; i++){
+        if(i == 9000000){
+            add_to_point_array(points, far);
+        }else{
+            add_to_point_array(points, near);
+        }
+    }
+
+    Point max = max_distance_cuda(l, points);
+    printf("Max dist: (%f, %f)\n", max.x, max.y);
+}

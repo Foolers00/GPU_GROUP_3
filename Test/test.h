@@ -38,6 +38,11 @@
 #include "prefix_scan.h"
 #endif
 
+#ifndef MAX_DISTANCE_CUDA
+#define MAX_DISTANCE_CUDA
+#include "../Parallel/max_distance.h"
+#endif
+
 
 
 
@@ -69,5 +74,9 @@ void compare_prescan_inclusive(unsigned long long int *h_data, unsigned long lon
 
 void compare_prescan_exclusive(unsigned long long int *h_data, unsigned long long int *gpuRef, size_t size);
 
+/*
+ * tests the max_distance calculation
+ */
+void test_max_distance_cuda();
 
 void printData(unsigned long long int *data, const size_t size);

@@ -5,8 +5,8 @@ CC=gcc -g -Wall
 NVCC=nvcc
 CUDAFLAGS= -std=c++11 -O2 -lineinfo
 
-all: main.o general_functions.o dynamic_array.o libtest.so vector.o general_functions_par.o prefix_scan.o
-	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -o prog main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o -lm 
+all: main.o general_functions.o dynamic_array.o libtest.so vector.o general_functions_par.o prefix_scan.o max_distance.o
+	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -o prog main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o max_distance.o -lm
 
 
 main.o: main.cu Test/test.h Data_Types/data_types.h Sequential/general_functions.h Sequential/dynamic_array.h Data_Types/vector.h 
@@ -38,6 +38,9 @@ general_functions_par.o: Parallel/general_functions_par.cu Parallel/general_func
 
 prefix_scan.o: Parallel/prefix_scan.cu Parallel/prefix_scan.h Data_Types/data_types_par.h Test/test.h
 	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -c Parallel/prefix_scan.cu
+
+max_distance.o: Parallel/max_distance.cu Parallel/max_distance.h Data_Types/data_types_par.h Test/test.h
+	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -c Parallel/max_distance.cu
 
 clean:
 	rm -rf prog *.o *.so
