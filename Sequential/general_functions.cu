@@ -145,18 +145,6 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
 
 }
 
-// calculates the minimal distance from a Point z to the Line l
-// double distance(Line l, Point z){
-//     double a = l.k;
-//     double b = -1.0;
-//     double c = l.d;
-//     if (a == 0 && b == 0) {
-//         fprintf(stderr, "distance cannot be calculated for illegal line equation.");
-//         exit(-1);
-//     }else{
-//         return fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b *b );
-//     }
-// }
 
 double distance(Line l, Point z){
     

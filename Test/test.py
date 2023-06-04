@@ -60,7 +60,7 @@ turtle.speed(1000)
 turtle.penup()
 turtle.screensize(canvwidth, canvheight, bg="white")
 
-so_file = "./libtest.so"
+so_file = "../libtest.so"
 my_functions = ctypes.CDLL(so_file)
 
 my_functions.test_sequence_2.restype = ctypes.POINTER(Point_array)

@@ -29,7 +29,7 @@
 
 #ifndef DATA_TYPES
 #define DATA_TYPES
-#include "data_types.h"
+#include "../Data_Types/data_types.h"
 #endif
 
 #ifndef DYNAMIC_ARRAY
@@ -44,7 +44,7 @@
 
 #ifndef VECTOR
 #define VECTOR
-#include "vector.h"
+#include "../Data_Types/vector.h"
 #endif
 
 
