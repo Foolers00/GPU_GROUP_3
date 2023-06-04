@@ -285,3 +285,27 @@ void test_max_distance_cuda(){
     Point max = max_distance_cuda(l, points);
     printf("Max dist: (%f, %f)\n", max.x, max.y);
 }
+
+void test_minmax_cuda(){
+    int size = 1000000;
+
+    Point_array* points = init_point_array(size);
+
+    Point left = (Point){.x = -1, .y = 2};
+    Point middle = (Point){.x = 100, .y = 8};
+    Point right = (Point){.x = 200, .y = 3};
+
+    for(int i = 0; i < size; i++){
+        if(i == 1234){
+            add_to_point_array(points, left);
+        }else if(i == 2345){
+            add_to_point_array(points, right);
+        }else{
+            add_to_point_array(points, middle);
+        }
+    }
+
+    Point min, max;
+    minmax_cuda(points, &min, &max);
+    printf("Max: (%f, %f) | Min: (%f, %f)\n", max.x, max.y, min.x, min.y);
+}

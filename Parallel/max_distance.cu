@@ -2,8 +2,8 @@
 /* MAX DISTANCE CUDA */
 /////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PREFIX
-#define PREFIX
+#ifndef MAX_DISTANCE
+#define MAX_DISTANCE
 #include "max_distance.h"
 #endif
 
@@ -72,14 +72,14 @@ Point max_distance_cuda(Line l, Point_array* points){
     Point* d_points_out;
     CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
 
-    do{
+    while(size > threadsPerBlock){
         max_distance_kernel<<<numBlocks, threadsPerBlock>>>(d_l, d_points_in, size, d_points_out);
         CHECK(cudaMemcpy(d_points_in, d_points_out, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice));
         size = numBlocks;
         numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
         CHECK(cudaFree(d_points_out));
         CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
-    }while(size > threadsPerBlock);
+    }
 
     Point* d_max;
     CHECK(cudaMalloc((void**)&d_max,sizeof(Point)));

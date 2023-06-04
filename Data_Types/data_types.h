@@ -12,6 +12,9 @@
 #define ON 0
 #define BELOW -1
 
+#define OP_MIN 0
+#define OP_MAX 1
+
 
 
 
