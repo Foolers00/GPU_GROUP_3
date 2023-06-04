@@ -30,13 +30,20 @@
 #endif
 
 
+#define STD_MEMORY 1
+#define PIN_MEMORY 2
+#define ZERO_MEMORY 3
+
+#define MEMORY_MODEL STD_MEMORY
 
 
-
-Hull* quickhull_split_par(Point_array* points, Line l, int side);
-
+Hull_par* quickhull_par(Point_array_par* points, Line l, int side);
 
 
+Hull_par* quickhull_split_par(Point_array_par* points, Line l, int side);
 
 
 int* workload_calc(int *grid_size, size_t* array_fsize, size_t array_size);
+
+
+Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2);

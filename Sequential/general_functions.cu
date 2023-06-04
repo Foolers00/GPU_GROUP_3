@@ -28,6 +28,7 @@ Hull* quickhull(Point_array* points){
 
 
 Hull* quickhull_split(Point_array* points, Line l, int side){
+    
     Point_array* points_side = NULL;
     Point max_point;
     Line l_p_max;
