@@ -6,7 +6,7 @@ NVCC=nvcc
 CUDAFLAGS= -std=c++11 -O2 -lineinfo
 
 all: main.o general_functions.o dynamic_array.o libtest.so vector.o general_functions_par.o prefix_scan.o max_distance.o
-	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -o prog main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o max_distance.o -lm
+	$(NVCC) $(CUDAFLAGS) -Xcompiler -fPIC -o prog.out main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o max_distance.o -lm
 
 
 main.o: main.cu Test/test.h Data_Types/data_types.h Sequential/general_functions.h Sequential/dynamic_array.h Data_Types/vector.h 
