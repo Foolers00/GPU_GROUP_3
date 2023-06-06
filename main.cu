@@ -18,7 +18,9 @@ int main(){
     //test_sequence_2();
     //test_sequence_5();
 
-    test_minmax_cuda();
+    //test_minmax_cuda();
+
+    validate_minmax();
 
     return 0;
 }

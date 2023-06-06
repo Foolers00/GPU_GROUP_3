@@ -24,6 +24,10 @@
 #include "../Data_Types/data_types_par.h"
 #endif
 
+typedef struct{
+    //one array for finding min, one for finding max
+    Point *min, *max;
+}minmaxPoint;
 
 /*
  * writes the point with minimal x value in points to min and with maximal x value to max.
@@ -34,4 +38,4 @@ void minmax_cuda(Point_array* points, Point* min, Point* max);
 /*
  *
  */
-__global__ void minmax_kernel(Point* points, int size, Point* max, int op);
+__global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result);

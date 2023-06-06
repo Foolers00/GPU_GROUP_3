@@ -287,7 +287,7 @@ void test_max_distance_cuda(){
 }
 
 void test_minmax_cuda(){
-    int size = 1000000;
+    int size = 100000000;
 
     Point_array* points = init_point_array(size);
 
@@ -296,9 +296,9 @@ void test_minmax_cuda(){
     Point right = (Point){.x = 200, .y = 3};
 
     for(int i = 0; i < size; i++){
-        if(i == 1234){
+        if(i == 9000000){
             add_to_point_array(points, left);
-        }else if(i == 2345){
+        }else if(i == 1000000){
             add_to_point_array(points, right);
         }else{
             add_to_point_array(points, middle);
@@ -308,4 +308,40 @@ void test_minmax_cuda(){
     Point min, max;
     minmax_cuda(points, &min, &max);
     printf("Max: (%f, %f) | Min: (%f, %f)\n", max.x, max.y, min.x, min.y);
+    printf("%i\n", RAND_MAX);
+}
+
+void validate_minmax(){
+    int max_size = 100000000;
+    int iterations = 1000;
+    time_t t;
+    srand((unsigned) time(&t));
+    for(int i = 0; i < iterations; i++){
+        int size = rand() % max_size;
+        int l_bound = rand() % 1000000000;
+        int u_bound = rand() % 1000000000;
+        Point_array* in = generate_random_points(size,l_bound, u_bound);
+        Point min_seq, max_seq, min_cuda, max_cuda;
+
+        clock_t tic = clock();
+        points_on_hull(in, &min_seq, &max_seq);
+        clock_t toc = clock();
+        double time_seq = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        tic = clock();
+        minmax_cuda(in, &min_cuda, &max_cuda);
+        toc = clock();
+        double time_cuda = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        printf("time seq: %f, time cuda: %f\n", time_seq, time_cuda);
+
+
+        bool valid = min_seq.x == min_cuda.x && min_seq.y == min_cuda.y && max_seq.x == max_cuda.x && max_seq.y == max_cuda.y;
+        if(valid){
+            printf("no error found so far\n size: %i, l_bound: %i, u_bound: %i. Min seq: [%f, %f], Min cuda: [%f, %f], Max seq: [%f, %f], Max cuda: [%f, %f]\n", size, l_bound, u_bound, min_seq.x, min_seq.y, min_cuda.x, min_cuda.y, max_seq.x, max_seq.y, max_cuda.x, max_cuda.y);
+        }else {
+            printf("found error.\n size: %i, l_bound: %i, u_bound: %i. Min seq: [%f, %f], Min cuda: [%f, %f], Max seq: [%f, %f], Max cuda: [%f, %f]\n", size, l_bound, u_bound, min_seq.x, min_seq.y, min_cuda.x, min_cuda.y, max_seq.x, max_seq.y, max_cuda.x, max_cuda.y);
+            exit(1);
+        }
+    }
 }

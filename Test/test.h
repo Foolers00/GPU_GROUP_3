@@ -90,4 +90,9 @@ void test_max_distance_cuda();
  */
 void test_minmax_cuda();
 
+/*
+ * compares the results of minmax to the results of sequential implementation
+ */
+void validate_minmax();
+
 void printData(unsigned long long int *data, const size_t size);
