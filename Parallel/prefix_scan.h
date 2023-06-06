@@ -2,6 +2,7 @@
 /* PREFIX SCAN */
 /////////////////////////////////////////////////////////////////////////////////////
 
+#define PREFIX
 
 #ifndef CUDA
 #define CUDA
@@ -16,11 +17,6 @@
 #ifndef GENERAL_FUNCTIONS_PAR
 #define GENERAL_FUNCTIONS_PAR
 #include "general_functions_par.h"
-#endif
-
-#ifndef DATA_TYPES_PAR
-#define DATA_TYPES_PAR
-#include "../Data_Types/data_types_par.h"
 #endif
 
 

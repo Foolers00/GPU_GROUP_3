@@ -2,6 +2,8 @@
 /* Data Types */
 /////////////////////////////////////////////////////////////////////////////////////
 
+#define DATA_TYPES_PAR
+
 #ifndef STDIO
 #define STDIO
 #include <stdio.h>
@@ -18,6 +20,13 @@
 #define MAX_BLOCK_COUNT_SHIFT MAX_BLOCK_COUNT*2*BLOCKSIZE
 #define INCLUSIVE 1
 #define EXCLUSIVE 0
+
+
+#define STD_MEMORY 1
+#define PIN_MEMORY 2
+#define ZERO_MEMORY 3
+
+#define MEMORY_MODEL STD_MEMORY
 
 
 

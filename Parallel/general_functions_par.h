@@ -2,6 +2,8 @@
 /* GENERAL FUNCTIONS PARALLEL */
 /////////////////////////////////////////////////////////////////////////////////////
 
+#define GENERAL_FUNCTIONS_PAR
+
 #ifndef CUDA
 #define CUDA
 #include <cuda_runtime.h>
@@ -17,24 +19,15 @@
 #include "../Sequential/general_functions.h"
 #endif
 
-
 #ifndef DATA_TYPES_PAR
 #define DATA_TYPES_PAR
 #include "../Data_Types/data_types_par.h"
 #endif
 
-
 #ifndef PREFIX
 #define PREFIX
 #include "prefix_scan.h"
 #endif
-
-
-#define STD_MEMORY 1
-#define PIN_MEMORY 2
-#define ZERO_MEMORY 3
-
-#define MEMORY_MODEL STD_MEMORY
 
 
 Hull_par* quickhull_par(Point_array_par* points, Line l, int side);
