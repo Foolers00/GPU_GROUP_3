@@ -23,17 +23,17 @@ Hull_par* quickhull_par(Point_array_par* points){
     Hull_par* hull_down = NULL;
 
     // above below array var
-    Point_array_par points_above;
-    Point_array_par points_below;
+    Point_array_par* points_above;
+    Point_array_par* points_below;
 
     // points on hull
     ///////////////////////////////////
 
     // splits array into above and below
-    split_point_array(points, &points_above, &points_below, l_pq);
+    split_point_array(points, points_above, points_below, l_pq);
 
-    hull_up = quickhull_split_par(&points_above, l_pq, ABOVE);
-    hull_down = quickhull_split_par(&points_below, l_pq, BELOW);
+    // hull_up = quickhull_split_par(&points_above, l_pq, ABOVE);
+    // hull_down = quickhull_split_par(&points_below, l_pq, BELOW);
 
     return combine_hull_par(hull_up, hull_down);
 
@@ -55,51 +55,48 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line l, int side){
 
 
 
-int* workload_calc(int* grid_size, size_t* array_fsize, size_t array_size){
 
-    int need_blocks;
-    int load_per_block;
-    int rem_blocks;
-    int* workload; 
 
-    need_blocks =  (array_size + 2*BLOCKSIZE - 1) / (2*BLOCKSIZE);
-    
-    if(array_fsize){
-        *array_fsize = need_blocks*2*BLOCKSIZE; 
-    }
+void workload_calc(size_t* grid_size, size_t* rem_grid_size, size_t* loop_cnt, size_t* sizef, size_t size){
 
-    if(need_blocks>=MAX_BLOCK_COUNT){
-        *grid_size = MAX_BLOCK_COUNT;
-        load_per_block = need_blocks/MAX_BLOCK_COUNT;
-        rem_blocks = need_blocks%MAX_BLOCK_COUNT;
-    }
-    else{
+	size_t need_blocks;
+
+	need_blocks = (size + 2*BLOCKSIZE-1)/(2*BLOCKSIZE);
+	*loop_cnt = need_blocks/MAX_BLOCK_COUNT;
+	
+    *sizef = need_blocks*2*BLOCKSIZE;
+
+	if(*loop_cnt < 1){
         *grid_size = need_blocks;
-        load_per_block = 1;
-        rem_blocks = 0;
-    }
+		*rem_grid_size = 0;
+		*loop_cnt = 1;	
+	}
+	else{
+        *grid_size = MAX_BLOCK_COUNT; 
+		*rem_grid_size = need_blocks%MAX_BLOCK_COUNT;
+	}
 
-    #if MEMORY_MODEL == STD_MEMORY
-    workload = (int*)malloc(sizeof(int)*(*grid_size)); 
-    if(!workload){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
-    #endif
     
 
-    for(int i = 0; i<*grid_size; i++){
-        if(rem_blocks>i){
-            workload[i] = load_per_block+1;
-        }
-        else{
-            workload[i] = load_per_block;
-        }
-        
+}
+
+
+Point_array_par* generate_random_points_par(int num_of_points, double l_bound, double u_bound){
+
+    time_t t;
+    double difference = u_bound - l_bound;
+    double offset_x = 0;
+    double offset_y = 0;
+    srand((unsigned) time(&t));
+
+    Point_array_par* points = init_point_array_par(num_of_points);
+    for(size_t i = 0; i < num_of_points; i++){
+        offset_x = rand() % (int)difference;
+        offset_y = rand() % (int)difference;
+        points->array[i] = (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y};
     }
 
-    return workload;
-
+    return points;
 }
 
 

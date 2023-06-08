@@ -50,49 +50,69 @@
 #include "../Parallel/minmax.h"
 #endif
 
+#ifndef SPLIT
+#define SPLIT
+#include "../Parallel/split.h"
+#endif
+
 
 
 Point* test_sequence_1();
 
+
 Point_array* test_sequence_2();
+
 
 Hull* test_sequence_3();
 
+
 Point_array* test_sequence_4_1();
+
 
 Hull* test_sequence_4_2(Point_array* points);
 
 
 // prefix test
-void test_sequence_5();
+void test_prescan();
+void test_prescan_gpu();
 
 
 /*
     initializes an array with random numbers with size
 */
-void initialData(unsigned long long int *init_array, const size_t size);
+void initialData(size_t *init_array, const size_t size);
 
 
 /*
     compares prescan results from gpu to sequential one
 */
-void compare_prescan_inclusive(unsigned long long int *h_data, unsigned long long int *gpuRef, size_t size);
+void compare_prescan_inclusive(size_t *h_data, size_t *gpuRef, size_t size);
 
-void compare_prescan_exclusive(unsigned long long int *h_data, unsigned long long int *gpuRef, size_t size);
+
+void compare_prescan_exclusive(size_t *h_data, size_t *gpuRef, size_t size);
+
 
 /*
  * tests the max_distance calculation
  */
 void test_max_distance_cuda();
 
+
 /*
  * tests the minmax calculation
  */
 void test_minmax_cuda();
+
 
 /*
  * compares the results of minmax to the results of sequential implementation
  */
 void validate_minmax();
 
-void printData(unsigned long long int *data, const size_t size);
+/*
+    test the check above split
+*/
+void test_split();
+
+
+void printData(size_t *data, const size_t size);

@@ -16,11 +16,14 @@ int main(){
     // Hull* hull = quickhull(points);
 
     //test_sequence_2();
-    //test_sequence_5();
+    //test_prescan();
+    //test_prescan_gpu();
 
     //test_minmax_cuda();
 
-    validate_minmax();
+    //validate_minmax();
+
+    test_split();
 
     return 0;
 }

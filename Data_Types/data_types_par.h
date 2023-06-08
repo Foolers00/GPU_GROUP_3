@@ -14,8 +14,8 @@
 #include "data_types.h"
 #endif
 
-
-#define MAX_BLOCK_COUNT 65535
+#define MAX_BLOCK_COUNT 2147483647
+//#define MAX_BLOCK_COUNT 65535
 #define BLOCKSIZE 512
 #define MAX_BLOCK_COUNT_SHIFT MAX_BLOCK_COUNT*2*BLOCKSIZE
 #define INCLUSIVE 1
@@ -62,3 +62,11 @@ typedef struct Hull_par{
     Line* array;
     size_t size;
 }Hull_par;
+
+
+
+Point_array_par* init_point_array_par(size_t size);
+
+
+
+Hull_par* init_hull_par(size_t size);

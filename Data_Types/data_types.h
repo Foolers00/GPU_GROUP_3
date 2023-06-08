@@ -65,3 +65,17 @@ typedef struct Hull{
     size_t curr_size;
     size_t max_size;
 }Hull;
+
+
+/*
+    Returns malloced point array and initializes the values size for curr_size, 
+    max_size/2 for the threshold to expand and mallocs array inside point array 
+    with max_size size 
+*/
+Point_array* init_point_array(size_t max_size);
+
+/* 
+    Returns malloced Hull and initializes the values size for curr_size, max_size/2 
+    for the threshold to expand and mallocs line array curr_size big 
+*/
+Hull* init_hull(size_t max_size);

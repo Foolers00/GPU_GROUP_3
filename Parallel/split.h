@@ -28,16 +28,16 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
 void split_point_array_side(Point_array_par* points, Point_array_par* points_side, Line l, int side);
 
 
-__global__ void setbits(unsigned long long int *above_bits, unsigned long long int *below_bits, 
-                        Point* points, Line l, int* workload);
+__global__ void setbits(size_t *above_bits, size_t *below_bits, Point* points, Line l, 
+                            size_t array_size, int block_offset);
 
 
-__global__ void setbits_side(unsigned long long int *bits, Point* points, Line l, 
-                            int* workload, int side);
+__global__ void setbits_side(size_t *bits, Point* points, Line l, 
+                            size_t array_size, int side, int block_offset);
 
 
-__global__ void movevalues(Point *o_data, Point *i_data, unsigned long long int *bit_data,
-                           unsigned long long int *index_data, int* workload);                        
+__global__ void movevalues(Point* o_data, Point* i_data, size_t* bit_data,
+                           size_t* index_data, size_t array_fsize, int block_offset);                        
 
 __device__ void check_point_location_gpu(Line l, Point z, int* result);
 
