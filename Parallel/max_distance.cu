@@ -98,7 +98,7 @@ Point max_distance_cuda(Line l, Point_array* points){
 
 
 //int main(int argc, char** argv){
-//    int size = 10000000;
+//    int size = 500000000; // 500 mio
 //
 //    Point_array* points = init_point_array(size);
 //
@@ -114,60 +114,17 @@ Point max_distance_cuda(Line l, Point_array* points){
 //        }
 //    }
 //
-//    Point max = max_distance_cuda(l, points);
-//    printf("Max dist: (%f, %f)\n", max.x, max.y);
+//    time_t tic = clock();
+//    Point max_cuda = max_distance_cuda(l, points);
+//    time_t toc = clock();
+//    double sec_cuda = (double)(toc - tic)/CLOCKS_PER_SEC;
+//    printf("Max dist cuda: (%f, %f) Time elapsed: %f\n", max_cuda.x, max_cuda.y, sec_cuda);
 //
-//
-//
-//    int size = 100000000;
-//    int threadsPerBlock = 512; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
-//    int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
-//
-//    Point near = (Point){.x = 1, .y = 2};
-//    Point far = (Point){.x = 1, .y = 8};
-//
-//    Point* points = (Point*) malloc(sizeof(Point) * size);
-//    for (int i = 0; i < size; i++){
-//        points[i] = near;
-//    }
-//    points[99000000] = far;
-//
-//    Line l = (Line){.p = (Point){.x = 0, .y = 0}, .q = (Point){.x = 1000, .y = 1000}};
-//
-//    Line* d_l;
-//    CHECK(cudaMalloc((void**)&d_l, sizeof(Line)));
-//    CHECK(cudaMemcpy(d_l, &l, sizeof(Line), cudaMemcpyHostToDevice));
-//
-//    Point* d_points_in;
-//    CHECK(cudaMalloc((void**)&d_points_in, size * sizeof(Point)));
-//    CHECK(cudaMemcpy(d_points_in, points, size*sizeof(Point), cudaMemcpyHostToDevice));
-//
-//    Point* d_points_out;
-//    CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
-//
-//    do{
-//        printf("kernel call with size %i, numBlocks %i\n", size, numBlocks);
-//        max_distance_kernel<<<numBlocks, threadsPerBlock>>>(d_l, d_points_in, size, d_points_out);
-//        CHECK(cudaMemcpy(d_points_in, d_points_out, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice));
-//        size = numBlocks;
-//        numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
-//        CHECK(cudaFree(d_points_out));
-//        CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
-//    }while(size > threadsPerBlock);
-//
-//    Point* d_max;
-//    CHECK(cudaMalloc((void**)&d_max,sizeof(Point)));
-//    printf("last kernel call with size %i, numBlocks %i\n", size, numBlocks);
-//    max_distance_kernel<<<1, threadsPerBlock>>>(d_l, d_points_in, size,d_max);
-//
-//    Point max;
-//    CHECK(cudaMemcpy(&max, d_max, sizeof(Point), cudaMemcpyDeviceToHost));
-//
-//    printf("Max dist: (%f, %f)\n", max.x, max.y);
-//
-//    CHECK(cudaFree(d_points_in));
-//    CHECK(cudaFree(d_l));
-//    CHECK(cudaFree(d_points_out));
+//    tic = clock();
+//    Point max_seq = max_distance(l, points);
+//    toc = clock();
+//    double sec_seq = (double)(toc - tic)/CLOCKS_PER_SEC;
+//    printf("Max dist seq: (%f, %f) Time elapsed: %f\n", max_seq.x, max_seq.y, sec_seq);
 //
 //    return 0;
 //}

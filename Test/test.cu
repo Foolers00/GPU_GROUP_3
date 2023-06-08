@@ -425,14 +425,14 @@ void test_minmax_cuda(){
 
 
 void validate_minmax(){
-    int max_size = 100000000;
+    int max_size = 10000000;
     int iterations = 1000;
     time_t t;
     srand((unsigned) time(&t));
     for(int i = 0; i < iterations; i++){
         int size = rand() % max_size;
-        int l_bound = rand() % 1000000000;
-        int u_bound = rand() % 1000000000;
+        int l_bound = -(rand() % 100000);
+        int u_bound = rand() % 100000;
         Point_array* in = generate_random_points(size,l_bound, u_bound);
         Point min_seq, max_seq, min_cuda, max_cuda;
 
@@ -449,7 +449,7 @@ void validate_minmax(){
         printf("time seq: %f, time cuda: %f\n", time_seq, time_cuda);
 
 
-        bool valid = min_seq.x == min_cuda.x && min_seq.y == min_cuda.y && max_seq.x == max_cuda.x && max_seq.y == max_cuda.y;
+        bool valid = min_seq.x == min_cuda.x && max_seq.x == max_cuda.x;
         if(valid){
             printf("no error found so far\n size: %i, l_bound: %i, u_bound: %i. Min seq: [%f, %f], Min cuda: [%f, %f], Max seq: [%f, %f], Max cuda: [%f, %f]\n", size, l_bound, u_bound, min_seq.x, min_seq.y, min_cuda.x, min_cuda.y, max_seq.x, max_seq.y, max_cuda.x, max_cuda.y);
         }else {

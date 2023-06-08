@@ -94,3 +94,38 @@ void minmax_cuda(Point_array* points, Point* min, Point* max){
     CHECK(cudaFree(points_in.max));
 
 }
+//int main(int argc, char **argv){
+//    int size = 450000000; // 450 mio
+//
+//    Point_array* points = init_point_array(size);
+//
+//    Point left = (Point){.x = -1, .y = 2};
+//    Point middle = (Point){.x = 100, .y = 8};
+//    Point right = (Point){.x = 200, .y = 3};
+//
+//    for(int i = 0; i < size; i++){
+//        if(i == 90000000){ // 90 Mio
+//            add_to_point_array(points, left);
+//        }else if(i == 1000000){ // 1 Mio
+//            add_to_point_array(points, right);
+//        }else{
+//            add_to_point_array(points, middle);
+//        }
+//    }
+//
+//    time_t tic = clock();
+//    Point max_cuda, min_cuda;
+//    minmax_cuda(points, &min_cuda, &max_cuda);
+//    time_t toc = clock();
+//    double sec_cuda = (double)(toc - tic)/CLOCKS_PER_SEC;
+//    printf("Max cuda: (%f, %f), Min cuda: (%f, %f), Time elapsed: %f\n", max_cuda.x, max_cuda.y, min_cuda.x, min_cuda.y, sec_cuda);
+//
+//    tic = clock();
+//    Point max_seq, min_seq;
+//    points_on_hull(points, &min_seq, &max_seq);
+//    toc = clock();
+//    double sec_seq = (double)(toc - tic)/CLOCKS_PER_SEC;
+//    printf("Max seq: (%f, %f), Min seq: (%f, %f), Time elapsed: %f\n", max_seq.x, max_seq.y, min_seq.x, min_seq.y, sec_seq);
+//
+//    return 0;
+//}
