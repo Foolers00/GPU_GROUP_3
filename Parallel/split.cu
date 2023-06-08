@@ -9,7 +9,7 @@
 
 
 void split_point_array(Point_array_par* points, Point_array_par* points_above, 
-    Point_array_par* points_below, Line l){
+    Point_array_par* points_below, Line* l){
 
     // workload array var
     size_t array_grid_size;
@@ -44,7 +44,11 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
     CHECK(cudaMalloc((size_t **)&below_index, array_fbytes+sizeof(size_t)));
 
     // transfer point array and workload
-    CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyHostToDevice));
+    #if MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostGetDevicePointer((void **)&points_gpu, (void *)points->array, 0));
+    #else
+        CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyHostToDevice));
+    #endif
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
     for(int i = 0; i < array_loop_cnt; i++){
@@ -76,11 +80,11 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
         movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_above, points_gpu, above_bits, 
                                                 above_index, array_fsize, array_loop_cnt);
     }
-
-
     // copy size and values back
     points_above->array = temp_above;
     CHECK(cudaMemcpy(&points_above->size, above_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost));
+
+
 
     // move values
     for(int i = 0; i < array_loop_cnt; i++){
@@ -91,13 +95,16 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
          movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_below, points_gpu, below_bits, 
                                                 below_index, array_fsize, array_loop_cnt);       
     }
-
     // copy size and values back
     points_below->array = temp_below;
     CHECK(cudaMemcpy(&points_below->size, below_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
+
+
     // free memory
-    CHECK(cudaFree(points_gpu));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaFree(points_gpu));
+    #endif
     CHECK(cudaFree(above_bits));
     CHECK(cudaFree(below_bits));
     CHECK(cudaFree(above_index));
@@ -106,7 +113,7 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
 }
 
 
-void split_point_array_side(Point_array_par* points, Point_array_par* points_side, Line l, int side){
+void split_point_array_side(Point_array_par* points, Point_array_par* points_side, Line* l, int side){
 
     // workload array var
     size_t array_grid_size;
@@ -114,7 +121,6 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     size_t array_loop_cnt;
     size_t array_fsize;
     size_t array_fbytes;
-    size_t point_bytes;
     size_t point_fbytes;
 
     // memory var
@@ -127,15 +133,10 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     workload_calc(&array_grid_size, &array_rem_grid_size, &array_loop_cnt, &array_fsize, points->size);
     point_fbytes = array_fsize*sizeof(Point);
     array_fbytes = array_fsize*sizeof(size_t);
-    point_bytes = points->size*sizeof(Point);
 
     // set up memory
-    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes));
     CHECK(cudaMalloc((size_t **)&side_bits, array_fbytes+sizeof(size_t)));
     CHECK(cudaMalloc((size_t **)&side_index, array_fbytes+sizeof(size_t)));
-
-    // transfer point array and workload
-    CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyHostToDevice)); //remove!!!!
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
     for(int i = 0; i < array_loop_cnt; i++){
@@ -176,7 +177,7 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
 }
 
 
-__global__ void setbits(size_t *above_bits, size_t *below_bits, Point* points, Line l, 
+__global__ void setbits(size_t *above_bits, size_t *below_bits, Point* points, Line* l, 
                             size_t array_size, int block_offset)
 {
     int thid = (blockIdx.x) * blockDim.x + threadIdx.x;
@@ -233,7 +234,7 @@ __global__ void setbits(size_t *above_bits, size_t *below_bits, Point* points, L
 
 }
 
-__global__ void setbits_side(size_t *bits, Point* points, Line l, 
+__global__ void setbits_side(size_t *bits, Point* points, Line* l, 
                             size_t array_size, int side, int block_offset)
 {
     int thid = (blockIdx.x) * blockDim.x + threadIdx.x;
@@ -307,15 +308,15 @@ __global__ void movevalues(Point* o_data, Point* i_data, size_t* bit_data,
 }
 
 
-__device__ void check_point_location_gpu(Line l, Point z, int* result){
+__device__ void check_point_location_gpu(Line* l, Point z, int* result){
 
     Vector v1;
     Vector v2; 
     
     double cross_result;
 
-    init_vector_gpu(l.p, l.q, &v1);
-    init_vector_gpu(l.p, z, &v2);
+    init_vector_gpu(l->p, l->q, &v1);
+    init_vector_gpu(l->p, z, &v2);
     
     cross_product_gpu(v1, v2, &cross_result);
 

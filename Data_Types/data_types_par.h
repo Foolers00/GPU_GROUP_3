@@ -23,7 +23,7 @@
 
 
 #define STD_MEMORY 1
-#define PIN_MEMORY 2
+#define PINNED_MEMORY 2
 #define ZERO_MEMORY 3
 
 #define MEMORY_MODEL STD_MEMORY
@@ -67,6 +67,16 @@ typedef struct Hull_par{
 
 Point_array_par* init_point_array_par(size_t size);
 
+Point_array_par* init_point_array_par_gpu(size_t size);
 
+void free_point_array_par(Point_array_par* points);
+
+void free_point_array_par_gpu(Point_array_par* points);
 
 Hull_par* init_hull_par(size_t size);
+
+Hull_par* init_hull_par_gpu(size_t size);
+
+void free_hull_par(Hull_par* hull);
+
+void free_hull_par_gpu(Hull_par* hull);

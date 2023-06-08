@@ -56,8 +56,8 @@ __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max
     }
 }
 
-Point max_distance_cuda(Line l, Point_array* points){
-    int size = points->curr_size;
+Point max_distance_cuda(Line l, Point_array_par* points){
+    int size = points->size;
     int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
 
@@ -100,7 +100,7 @@ Point max_distance_cuda(Line l, Point_array* points){
 //int main(int argc, char** argv){
 //    int size = 10000000;
 //
-//    Point_array* points = init_point_array(size);
+//    Point_array_par* points = init_Point_array_par(size);
 //
 //    Point near = (Point){.x = 1, .y = 2};
 //    Point far = (Point){.x = 1, .y = 8};
@@ -108,9 +108,9 @@ Point max_distance_cuda(Line l, Point_array* points){
 //
 //    for(int i = 0; i < size; i++){
 //        if(i == 9000000){
-//            add_to_point_array(points, far);
+//            add_to_Point_array_par(points, far);
 //        }else{
-//            add_to_point_array(points, near);
+//            add_to_Point_array_par(points, near);
 //        }
 //    }
 //

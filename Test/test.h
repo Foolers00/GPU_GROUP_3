@@ -72,7 +72,9 @@ Point_array* test_sequence_4_1();
 Hull* test_sequence_4_2(Point_array* points);
 
 
-// prefix test
+/* 
+    prefix test
+*/
 void test_prescan();
 void test_prescan_gpu();
 
@@ -118,6 +120,11 @@ void test_split();
     tests the combine hull function
 */
 void test_combinehull();
+
+/*
+    tests parallel quickhull
+*/
+void test_quickhull();
 
 
 void printData(size_t *data, const size_t size);

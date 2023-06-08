@@ -240,22 +240,35 @@ void test_prescan(){
     size_t array_bytes;
     size_t* gpuRef;
 
-    array_size = 200000000; 
+    array_size = 10000000;
+
     array_bytes = array_size*(sizeof(size_t));
-    array = (size_t*)malloc(sizeof(size_t)*array_size);
-    if(!array){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
+
+    #if MEMORY_MODEL == STD_MEMORY
+        array = (size_t*)malloc(sizeof(size_t)*array_size);
+        if(!array){
+            fprintf(stderr, "Malloc failed");
+            exit(1);
+        }
+    #elif MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaMallocHost((size_t**)&array, sizeof(size_t)*array_size));
+    #elif MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostAlloc((void**)&array, sizeof(size_t)*array_size, cudaHostAllocMapped));
+    #endif
+
     initialData(array, array_size);
     
+    #if MEMORY_MODEL == STD_MEMORY
+        gpuRef = (size_t*)malloc(array_size*sizeof(size_t));
+        if(!array){
+            fprintf(stderr, "Malloc failed");
+            exit(1);
+        }
+    #else
+        CHECK(cudaMallocHost((size_t**)&gpuRef, sizeof(size_t)*array_size));
+    #endif
+    
 
-    // copy back results
-    gpuRef = (size_t *)malloc(array_bytes*sizeof(size_t));
-    if(!gpuRef){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
     memset(gpuRef, 0, array_bytes);
 
     for(int i = 0; i < iterations; i++){
@@ -281,17 +294,29 @@ void test_prescan(){
     // compare results
     compare_prescan_exclusive(array, gpuRef, array_size);
 
-    free(gpuRef);
-    free(array);
+    // free memory
+    #if MEMORY_MODEL == STD_MEMORY
+        free(array);
+        free(gpuRef);
+    #elif MEMORY_MODEL == PINNED_MEMORY || MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaFreeHost(array));
+        CHECK(cudaFreeHost(gpuRef));
+    #endif
    
-    
+    // reset device
+    CHECK(cudaDeviceReset());
 
 }
 
 
 void test_prescan_gpu(){
+    
+    // device set up
+    int dev; 
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
 
-        // clock
+    // clock
     clock_t tic = clock();
     clock_t toc = clock();
     double new_scan;
@@ -314,13 +339,21 @@ void test_prescan_gpu(){
     size_t* i_array_gpu;
     size_t* o_array_gpu;
 
-    array_size = rand()%200000000; 
+    array_size = rand()%200000000;
     array_bytes = array_size*(sizeof(size_t));
-    array = (size_t*)malloc(sizeof(size_t)*array_size);
-    if(!array){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
+
+    #if MEMORY_MODEL == STD_MEMORY
+        array = (size_t*)malloc(sizeof(size_t)*array_size);
+        if(!array){
+            fprintf(stderr, "Malloc failed");
+            exit(1);
+        }
+    #elif MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaMallocHost((size_t**)&array, sizeof(size_t)*array_size));
+    #elif MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostAlloc((size_t**)&array, sizeof(size_t)*array_size, cudaHostAllocMapped));
+    #endif
+
     initialData(array, array_size);
 
     workload_calc(&array_grid_size, &array_rem_grid_size, &array_loop_cnt,
@@ -328,17 +361,30 @@ void test_prescan_gpu(){
 
     array_fbytes = array_fsize*sizeof(size_t);
 
-    CHECK(cudaMalloc((size_t **)&i_array_gpu, array_fbytes));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaMalloc((size_t **)&i_array_gpu, array_fbytes));
+    #endif
+
+
     CHECK(cudaMalloc((size_t **)&o_array_gpu, array_fbytes));
     
-    CHECK(cudaMemcpy(i_array_gpu, array, array_bytes, cudaMemcpyHostToDevice));
+    #if MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostGetDevicePointer((void **)&i_array_gpu, (void *)array, 0));
+    #else
+        CHECK(cudaMemcpy(i_array_gpu, array, array_bytes, cudaMemcpyHostToDevice));
+    #endif
 
     // copy back results
-    gpuRef = (size_t *)malloc(array_bytes*sizeof(size_t));
+    #if MEMORY_MODEL == STD_MEMORY
+    gpuRef = (size_t *)malloc(array_size*sizeof(size_t));
     if(!gpuRef){
         fprintf(stderr, "Malloc failed");
         exit(1);
     }
+    #else
+        CHECK(cudaMallocHost((size_t**)&gpuRef, sizeof(size_t)*array_size));  
+    #endif
+
     memset(gpuRef, 0, array_bytes);
 
     for(int i = 0; i < iterations; i++){
@@ -368,10 +414,26 @@ void test_prescan_gpu(){
     // compare results
     compare_prescan_exclusive(array, gpuRef, array_size);
 
-    CHECK(cudaFree(i_array_gpu));
+    //free memory
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaFree(i_array_gpu));
+    #endif
+
+
     CHECK(cudaFree(o_array_gpu));
-    free(gpuRef);
-    free(array);
+
+    #if MEMORY_MODEL == STD_MEMORY
+        free(gpuRef);
+        free(array);
+    #else
+        CHECK(cudaFreeHost(gpuRef));
+        CHECK(cudaFreeHost(array));
+    #endif
+    
+
+
+    // reset device
+    CHECK(cudaDeviceReset());
 
 }
 
@@ -393,8 +455,8 @@ void test_max_distance_cuda(){
         }
     }
 
-    Point max = max_distance_cuda(l, points);
-    printf("Max dist: (%f, %f)\n", max.x, max.y);
+    //Point max = max_distance_cuda(l, points);
+    //printf("Max dist: (%f, %f)\n", max.x, max.y);
 }
 
 
@@ -417,10 +479,10 @@ void test_minmax_cuda(){
         }
     }
 
-    Point min, max;
-    minmax_cuda(points, &min, &max);
-    printf("Max: (%f, %f) | Min: (%f, %f)\n", max.x, max.y, min.x, min.y);
-    printf("%i\n", RAND_MAX);
+    // Point min, max;
+    // minmax_cuda(points, &min, &max);
+    // printf("Max: (%f, %f) | Min: (%f, %f)\n", max.x, max.y, min.x, min.y);
+    // printf("%i\n", RAND_MAX);
 }
 
 
@@ -433,16 +495,16 @@ void validate_minmax(){
         int size = rand() % max_size;
         int l_bound = rand() % 1000000000;
         int u_bound = rand() % 1000000000;
-        Point_array* in = generate_random_points(size,l_bound, u_bound);
+        //Point_array_par* in = generate_random_points(size,l_bound, u_bound);
         Point min_seq, max_seq, min_cuda, max_cuda;
 
         clock_t tic = clock();
-        points_on_hull(in, &min_seq, &max_seq);
+        //points_on_hull(in, &min_seq, &max_seq);
         clock_t toc = clock();
         double time_seq = (double)(toc - tic)/CLOCKS_PER_SEC;
 
         tic = clock();
-        minmax_cuda(in, &min_cuda, &max_cuda);
+        //minmax_cuda(in, &min_cuda, &max_cuda);
         toc = clock();
         double time_cuda = (double)(toc - tic)/CLOCKS_PER_SEC;
 
@@ -462,9 +524,16 @@ void validate_minmax(){
 
 void test_split(){
 
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
     // clock
-    clock_t tic = clock();
-    clock_t toc = clock();
+    clock_t tic;
+    clock_t toc;
     double cpu_time;
     double gpu_time;
 
@@ -482,19 +551,20 @@ void test_split(){
     Point_array_par* points_gpu;
     Point_array_par* points_above_gpu;
     Point_array_par* points_below_gpu;
-    Point* temp_above;
-    Point* temp_below;
+    Point_array_par* temp_above;
+    Point_array_par* temp_below;
 
     // point on hull var
     Point p;
     Point q;
     Line l_pq;
+    Line* l_pq_gpu;
 
     // state var for compare
     bool state = true;
 
     // set up array
-    size = 100000000;
+    size = 10000000;
     l_bound = 0;
     u_bound = 100000000;
 
@@ -534,18 +604,16 @@ void test_split(){
     // GPU Version
 
 
-    points_above_gpu = (Point_array_par*)malloc(sizeof(Point_array_par));
-    points_below_gpu = (Point_array_par*)malloc(sizeof(Point_array_par));
-    if(!points_above_gpu || !points_below_gpu){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
+    points_above_gpu = init_point_array_par_gpu(0);
+    points_below_gpu = init_point_array_par_gpu(0);
 
-    
+    CHECK(cudaMalloc((Line **)&l_pq_gpu, sizeof(Line)));
+    CHECK(cudaMemcpy(l_pq_gpu, &l_pq, sizeof(Line), cudaMemcpyHostToDevice));
+
 
     tic = clock();
     // splits array into above and below
-    split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq);
+    split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
     // split_point_array_side(points_gpu, points_above_gpu, l_pq, ABOVE);
     // split_point_array_side(points_gpu, points_below_gpu, l_pq, BELOW);
 
@@ -553,25 +621,20 @@ void test_split(){
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
     // copy back results
-    
-    temp_above = (Point*)malloc(points_above_gpu->size*sizeof(Point));
-    temp_below = (Point*)malloc(points_below_gpu->size*sizeof(Point));
-    if(!temp_above || !temp_below){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
+    temp_above = init_point_array_par(points_above_gpu->size*sizeof(Point));
+    temp_below = init_point_array_par(points_below_gpu->size*sizeof(Point));
 
-    CHECK(cudaMemcpy(temp_above, points_above_gpu->array, points_above_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
-    CHECK(cudaMemcpy(temp_below, points_below_gpu->array, points_below_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(temp_above->array, points_above_gpu->array, points_above_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(temp_below->array, points_below_gpu->array, points_below_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
 
     // compare results
     printf("Above results: ");
     for(size_t i = 0; i < points_above_cpu->curr_size; i++){
-        if(!compare_points(points_above_cpu->array[i], temp_above[i])){
+        if(!compare_points(points_above_cpu->array[i], temp_above->array[i])){
 
             printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
-            points_above_cpu->array[i].x, temp_above[i].x,
-            points_above_cpu->array[i].y, temp_above[i].y);
+            points_above_cpu->array[i].x, temp_above->array[i].x,
+            points_above_cpu->array[i].y, temp_above->array[i].y);
 
             state = false;
 
@@ -590,10 +653,10 @@ void test_split(){
 
     printf("Below results: ");
     for(size_t i = 0; i < points_below_cpu->curr_size; i++){
-        if(!compare_points(points_below_cpu->array[i], temp_below[i])){
+        if(!compare_points(points_below_cpu->array[i], temp_below->array[i])){
             printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
-            points_below_cpu->array[i].x, temp_below[i].x,
-            points_below_cpu->array[i].y, temp_below[i].y);
+            points_below_cpu->array[i].x, temp_below->array[i].x,
+            points_below_cpu->array[i].y, temp_below->array[i].y);
 
             state = false;
 
@@ -633,10 +696,33 @@ void test_split(){
     }
 
 
+    // free memory
+    free(points_cpu);
+    free(points_above_cpu);
+    free(points_below_cpu);
+
+    free_point_array_par(points_gpu);
+    free_point_array_par_gpu(points_above_gpu);
+    free_point_array_par_gpu(points_below_gpu);
+    free_point_array_par(temp_above);
+    free_point_array_par(temp_below);
+
+    CHECK(cudaFree(l_pq_gpu));
+
+    // reset device
+    CHECK(cudaDeviceReset());
+
 }
 
 
 void test_combinehull(){
+
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
 
     // vars
     size_t hull_1_size;
@@ -673,19 +759,12 @@ void test_combinehull(){
     hull_1_cpu = generate_random_lines(hull_1_size, l_bound, u_bound);
     hull_2_cpu = generate_random_lines(hull_2_size, l_bound, u_bound);
 
-    hull_1_gpu = (Hull_par*)malloc(sizeof(Hull_par));
-    hull_2_gpu = (Hull_par*)malloc(sizeof(Hull_par));
-
-    if(!hull_1_gpu || !hull_2_gpu){
-        fprintf(stderr, "Malloc failed");
-        exit(1);
-    }
+    hull_1_gpu = init_hull_par_gpu(hull_1_size);
+    hull_2_gpu = init_hull_par_gpu(hull_2_size);
 
     hull_1_gpu->size = hull_1_size;
     hull_2_gpu->size = hull_2_size;
 
-    CHECK(cudaMalloc((Line **)&hull_1_gpu->array, hull_1_bytes));
-    CHECK(cudaMalloc((Line **)&hull_2_gpu->array, hull_2_bytes));
 
     CHECK(cudaMemcpy(hull_1_gpu->array , hull_1_cpu->array, hull_1_bytes, cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(hull_2_gpu->array , hull_2_cpu->array, hull_2_bytes, cudaMemcpyHostToDevice));
@@ -702,7 +781,6 @@ void test_combinehull(){
     }
 
     CHECK(cudaMemcpy(temp , hull_3_gpu->array, hull_3_bytes, cudaMemcpyDeviceToHost));
-
 
     printf("Combine result: ");
     for(int i = 0; i < hull_3_cpu->curr_size; i++){
@@ -740,10 +818,122 @@ void test_combinehull(){
        printf("Comparison Failed\n"); 
     }
 
+    // free memory
+    free_hull(hull_3_cpu);
+    free(temp);
+    free_hull_par_gpu(hull_3_gpu);
+
+    // reset device
+    CHECK(cudaDeviceReset());
+
 }
 
 
+void test_quickhull(){
 
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // clock
+    clock_t tic;
+    clock_t toc;
+    double cpu_time;
+    double gpu_time;
+
+    // vars
+    size_t size;
+    double l_bound;
+    double u_bound;
+
+    // cpu
+    Point_array* points_cpu;
+    Hull* hull_cpu;
+
+    // gpu
+    Point_array_par* points_gpu;
+    Hull_par* hull_gpu;
+
+    // state
+    bool state = true;
+
+
+    // set vars
+    size = 100;
+    l_bound = 0;
+    u_bound = 1000;
+
+    points_cpu = init_point_array(2*size);
+    points_gpu = generate_random_points_par(size, l_bound, u_bound);
+
+    memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+
+    tic = clock();
+    hull_cpu = quickhull(points_cpu);
+    toc = clock();
+    cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+
+    tic = clock();
+    hull_gpu = quickhull_par(points_gpu);
+    toc = clock();
+    gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+
+
+    printf("Compare result: ");
+    for(int i = 0; i < hull_cpu->curr_size; i++){
+        if(!compare_lines(hull_cpu->array[i], hull_gpu->array[i])){
+
+            printf("Lines do not match: Cpu: (%f, %f)-(%f, %f), Gpu: (%f, %f)-(%f, %f)\n",
+            hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y,
+            hull_gpu->array[i].p.x, hull_gpu->array[i].p.y, hull_gpu->array[i].q.x, hull_gpu->array[i].p.y);
+
+            state = false;
+
+        }
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    printf("Size result: ");
+    if(points_cpu->curr_size != points_gpu->size){
+        printf("Sizes do not match: CPU: %lu, GPU: %lu\n", points_cpu->curr_size, points_gpu->size);
+        state = false;
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+        printf("CPU time: %f, GPU time: %f\n", cpu_time, gpu_time);
+    }
+
+    // free memory
+    free_point_array(points_cpu);
+    free_point_array_par(points_gpu);
+    free_hull(hull_cpu);
+    free_hull_par(hull_gpu);
+
+    // reset device
+    CHECK(cudaDeviceReset());
+}
 
 
 Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){

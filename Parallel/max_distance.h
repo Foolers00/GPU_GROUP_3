@@ -39,4 +39,10 @@ __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max
 /*
  * calculates the point with maximal distance to l. uses several kernel calls.
  */
-Point max_distance_cuda(Line l, Point_array* points);
+Point max_distance_cuda(Line l, Point_array_par* points);
+
+/*
+ * calculates the point with maximal distance to l. uses several kernel calls.
+    writes lines into l_p_max and l_max_q which are gpu mem pointers
+ */
+//Point max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q);

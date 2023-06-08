@@ -52,8 +52,8 @@ __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
 }
 
 //TODO: calculate both min and max, not only max.
-void minmax_cuda(Point_array* points, Point* min, Point* max){
-    int size = points->curr_size;
+void minmax_cuda(Point_array_par* points, Point* min, Point* max){
+    int size = points->size;
     int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
 

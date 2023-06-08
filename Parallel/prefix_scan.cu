@@ -94,7 +94,6 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
     /////////////////////////// 
     // device var
     int dev;
-    cudaDeviceProp deviceProp;
     
     ///////////////////////////
     // array var
@@ -156,10 +155,8 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
     size_t* aux_5_data;
 
     ///////////////////////////
-    // device set up
-
+    // device set up    
     dev = 0;
-    CHECK(cudaGetDeviceProperties(&deviceProp, dev));
     CHECK(cudaSetDevice(dev));
 
     ///////////////////////////
@@ -198,7 +195,9 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
 
     ///////////////////////////
     // memory set up
-    CHECK(cudaMalloc((size_t **)&d_data, array_fbytes));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaMalloc((size_t **)&d_data, array_fbytes));
+    #endif
     CHECK(cudaMalloc((size_t **)&o_data, array_fbytes));
     CHECK(cudaMalloc((size_t **)&t_data, array_fbytes));
 
@@ -212,9 +211,13 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
 
 
     // copy data and workloads from host to device
-    CHECK(cudaMemset(d_data, 0, array_fbytes));
-    CHECK(cudaMemcpy(d_data, i_array, array_bytes, cudaMemcpyHostToDevice));
 
+    #if MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostGetDevicePointer((void **)&d_data, (void *)i_array, 0));
+    #else
+        //CHECK(cudaMemset(d_data, 0, array_fbytes));
+        CHECK(cudaMemcpy(d_data, i_array, array_bytes, cudaMemcpyHostToDevice));
+    #endif
     ///////////////////////////
     // prefix scan
 
@@ -305,7 +308,7 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
         add_block<<<array_rem_grid_size, BLOCKSIZE>>>
         (t_data, aux_data, array_loop_cnt);      
     }
-    
+
 
     if(mode == EXCLUSIVE){
         // array gets shifted by one for exclusive sum
@@ -329,7 +332,9 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
     CHECK(cudaMemcpy(o_array, o_data, array_bytes, cudaMemcpyDeviceToHost));
 
     // free memory
-    CHECK(cudaFree(d_data));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaFree(d_data));
+    #endif
     CHECK(cudaFree(t_data));
     CHECK(cudaFree(o_data));
 
@@ -346,10 +351,6 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
 void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
                             int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode){
 
-    /////////////////////////// 
-    // device var
-    int dev;
-    cudaDeviceProp deviceProp;
 
     ///////////////////////////
     // aux var
@@ -399,12 +400,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     size_t* aux_4_data;
     size_t* aux_5_data;
 
-    ///////////////////////////
-    // device set up
 
-    dev = 0;
-    CHECK(cudaGetDeviceProperties(&deviceProp, dev));
-    CHECK(cudaSetDevice(dev));
 
     ///////////////////////////
     // aux set up
@@ -574,7 +570,6 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
     /////////////////////////// 
     // device var
     int dev;
-    cudaDeviceProp deviceProp;
     
     ///////////////////////////
     // array var
@@ -639,7 +634,6 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
     // device set up
 
     dev = 0;
-    CHECK(cudaGetDeviceProperties(&deviceProp, dev));
     CHECK(cudaSetDevice(dev));
 
     ///////////////////////////
@@ -681,7 +675,9 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
 
     ///////////////////////////
     // memory set up
-    CHECK(cudaMalloc((size_t **)&d_data, array_fbytes));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaMalloc((size_t **)&d_data, array_fbytes));
+    #endif
     CHECK(cudaMalloc((size_t **)&o_data, array_fbytes));
     CHECK(cudaMalloc((size_t **)&t_data, array_fbytes));
 
@@ -695,8 +691,13 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
 
 
     // copy data and workloads from host to device
-    CHECK(cudaMemset(d_data, 0, array_fbytes));
-    CHECK(cudaMemcpy(d_data, i_array, array_bytes, cudaMemcpyHostToDevice));
+
+    #if MEMORY_MODEL == ZERO_MEMORY
+        CHECK(cudaHostGetDevicePointer((void **)&d_data, (void *)i_array, 0));
+    #else
+        //CHECK(cudaMemset(d_data, 0, array_fbytes));
+        CHECK(cudaMemcpy(d_data, i_array, array_bytes, cudaMemcpyHostToDevice));
+    #endif
 
     // init streams
     for(int i = 0; i < array_loop_cnt; i++){
@@ -839,7 +840,9 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
     CHECK(cudaMemcpy(o_array, o_data, array_bytes, cudaMemcpyDeviceToHost));
 
     // free memory
-    CHECK(cudaFree(d_data));
+    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
+        CHECK(cudaFree(d_data));
+    #endif
     CHECK(cudaFree(t_data));
     CHECK(cudaFree(o_data));
 
@@ -854,11 +857,6 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
 
 void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
                             int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode){
-
-    /////////////////////////// 
-    // device var
-    int dev;
-    cudaDeviceProp deviceProp;
 
     ///////////////////////////
     // aux var
@@ -907,13 +905,6 @@ void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fs
     size_t* aux_3_data;
     size_t* aux_4_data;
     size_t* aux_5_data;
-
-    ///////////////////////////
-    // device set up
-
-    dev = 0;
-    CHECK(cudaGetDeviceProperties(&deviceProp, dev));
-    CHECK(cudaSetDevice(dev));
 
     // stream var
     cudaStream_t streams[array_loop_cnt];
