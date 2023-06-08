@@ -59,3 +59,15 @@ Hull* init_hull(size_t max_size){
     return hull;
 
 }
+
+
+
+bool compare_lines(Line l_1, Line l_2){
+    return (compare_points(l_1.p, l_2.p) && compare_points(l_1.q, l_2.q));
+}
+
+
+
+bool compare_points(Point p_1, Point p_2){
+    return p_1.x == p_2.x && p_1.y == p_2.y;
+}

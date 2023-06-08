@@ -103,26 +103,41 @@ Point_array_par* generate_random_points_par(int num_of_points, double l_bound, d
 
 Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2){
 
-    // Hull* new_hull = (Hull*)malloc(sizeof(Hull));
+    // vars
+    Hull_par* hull_3;
+    size_t hull_1_bytes;
+    size_t hull_2_bytes;
+    size_t hull_3_bytes;
 
-    // new_hull->curr_size = hull_1->curr_size+hull_2->curr_size;
 
-    // if(hull_1->max_size >= hull_2->max_size){
-    //     new_hull->max_size = hull_1->max_size<<2;
-    // }
-    // else{
-    //     new_hull->max_size = hull_2->max_size<<2;
-    // }
+    // set memory
+    hull_3 = (Hull_par*)malloc(sizeof(Hull_par));
+    if(!hull_3){
+        fprintf(stderr, "Malloc failed");
+        exit(1);
+    }
 
-    // new_hull->array = (Line*)malloc(new_hull->max_size*sizeof(Line));
 
-    // memcpy(new_hull->array, hull_1->array, hull_1->curr_size*sizeof(Line));
-    // memcpy(&new_hull->array[hull_1->curr_size], hull_2->array, hull_2->curr_size*sizeof(Line));
+    // set sizes
+    hull_1_bytes = hull_1->size*sizeof(Line);
+    hull_2_bytes = hull_2->size*sizeof(Line);
+    hull_3_bytes = hull_1_bytes+hull_2_bytes;
+    hull_3->size = hull_1->size+hull_2->size;
 
-    // free_hull(hull_1);
-    // free_hull(hull_2);
+    // set memory
+    CHECK(cudaMalloc((Line **)&hull_3->array, hull_3_bytes));
 
-    // return new_hull;
+    // copy results 
+    CHECK(cudaMemcpy(hull_3->array, hull_1->array, hull_1_bytes, cudaMemcpyDeviceToDevice));
+    CHECK(cudaMemcpy(hull_3->array+hull_1->size, hull_2->array, hull_2_bytes, cudaMemcpyDeviceToDevice));
+
+    // free memory
+    CHECK(cudaFree(hull_1->array));
+    CHECK(cudaFree(hull_2->array));
+    free(hull_1);
+    free(hull_2);
+
+    return hull_3;
 
 }
 

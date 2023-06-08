@@ -265,18 +265,18 @@ void test_prescan(){
         new_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
         new_scan_avg += new_scan;
 
-        // tic = clock();
-        // master_prescan(gpuRef, array, array_size, array_bytes, EXCLUSIVE);
-        // toc = clock();
-        // old_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
-        // old_scan_avg += old_scan;
+        tic = clock();
+        master_prescan(gpuRef, array, array_size, array_bytes, EXCLUSIVE);
+        toc = clock();
+        old_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
+        old_scan_avg += old_scan;
     }
 
-    //old_scan_avg /= iterations;
+    old_scan_avg /= iterations;
     new_scan_avg /= iterations;
 
-    //printf("Old_scan: %f, New_scan: %f\n", old_scan, new_scan);
-    printf("Time: %f\n", new_scan);
+    printf("Old_scan: %f, New_scan: %f\n", old_scan, new_scan);
+    //printf("Time: %f\n", new_scan);
 
     // compare results
     compare_prescan_exclusive(array, gpuRef, array_size);
@@ -314,7 +314,7 @@ void test_prescan_gpu(){
     size_t* i_array_gpu;
     size_t* o_array_gpu;
 
-    array_size = 200000000; 
+    array_size = rand()%200000000; 
     array_bytes = array_size*(sizeof(size_t));
     array = (size_t*)malloc(sizeof(size_t)*array_size);
     if(!array){
@@ -425,14 +425,14 @@ void test_minmax_cuda(){
 
 
 void validate_minmax(){
-    int max_size = 10000000;
+    int max_size = 100000000;
     int iterations = 1000;
     time_t t;
     srand((unsigned) time(&t));
     for(int i = 0; i < iterations; i++){
         int size = rand() % max_size;
-        int l_bound = -(rand() % 100000);
-        int u_bound = rand() % 100000;
+        int l_bound = rand() % 1000000000;
+        int u_bound = rand() % 1000000000;
         Point_array* in = generate_random_points(size,l_bound, u_bound);
         Point min_seq, max_seq, min_cuda, max_cuda;
 
@@ -449,7 +449,7 @@ void validate_minmax(){
         printf("time seq: %f, time cuda: %f\n", time_seq, time_cuda);
 
 
-        bool valid = min_seq.x == min_cuda.x && max_seq.x == max_cuda.x;
+        bool valid = min_seq.x == min_cuda.x && min_seq.y == min_cuda.y && max_seq.x == max_cuda.x && max_seq.y == max_cuda.y;
         if(valid){
             printf("no error found so far\n size: %i, l_bound: %i, u_bound: %i. Min seq: [%f, %f], Min cuda: [%f, %f], Max seq: [%f, %f], Max cuda: [%f, %f]\n", size, l_bound, u_bound, min_seq.x, min_seq.y, min_cuda.x, min_cuda.y, max_seq.x, max_seq.y, max_cuda.x, max_cuda.y);
         }else {
@@ -567,8 +567,7 @@ void test_split(){
     // compare results
     printf("Above results: ");
     for(size_t i = 0; i < points_above_cpu->curr_size; i++){
-        if(points_above_cpu->array[i].x != temp_above[i].x ||
-            points_above_cpu->array[i].y != temp_above[i].y){
+        if(!compare_points(points_above_cpu->array[i], temp_above[i])){
 
             printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
             points_above_cpu->array[i].x, temp_above[i].x,
@@ -591,9 +590,7 @@ void test_split(){
 
     printf("Below results: ");
     for(size_t i = 0; i < points_below_cpu->curr_size; i++){
-        if(points_below_cpu->array[i].x != temp_below[i].x ||
-            points_below_cpu->array[i].y != temp_below[i].y){
-
+        if(!compare_points(points_below_cpu->array[i], temp_below[i])){
             printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
             points_below_cpu->array[i].x, temp_below[i].x,
             points_below_cpu->array[i].y, temp_below[i].y);
@@ -636,4 +633,143 @@ void test_split(){
     }
 
 
+}
+
+
+void test_combinehull(){
+
+    // vars
+    size_t hull_1_size;
+    size_t hull_1_bytes;
+
+    size_t hull_2_size;
+    size_t hull_2_bytes;
+
+    size_t hull_3_bytes;
+
+    int l_bound;
+    int u_bound;
+
+    Hull* hull_1_cpu;
+    Hull* hull_2_cpu;
+    Hull* hull_3_cpu;
+
+    Hull_par* hull_1_gpu;
+    Hull_par* hull_2_gpu;
+    Hull_par* hull_3_gpu;
+
+    Line* temp;
+
+    bool state = true;
+
+    // set vars
+    hull_1_size = 10;
+    hull_1_bytes = sizeof(Line)*hull_1_size;
+    hull_2_size = 10;
+    hull_2_bytes = sizeof(Line)*hull_2_size;
+    l_bound = 0;
+    u_bound = rand()%100000;
+
+    hull_1_cpu = generate_random_lines(hull_1_size, l_bound, u_bound);
+    hull_2_cpu = generate_random_lines(hull_2_size, l_bound, u_bound);
+
+    hull_1_gpu = (Hull_par*)malloc(sizeof(Hull_par));
+    hull_2_gpu = (Hull_par*)malloc(sizeof(Hull_par));
+
+    if(!hull_1_gpu || !hull_2_gpu){
+        fprintf(stderr, "Malloc failed");
+        exit(1);
+    }
+
+    hull_1_gpu->size = hull_1_size;
+    hull_2_gpu->size = hull_2_size;
+
+    CHECK(cudaMalloc((Line **)&hull_1_gpu->array, hull_1_bytes));
+    CHECK(cudaMalloc((Line **)&hull_2_gpu->array, hull_2_bytes));
+
+    CHECK(cudaMemcpy(hull_1_gpu->array , hull_1_cpu->array, hull_1_bytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(hull_2_gpu->array , hull_2_cpu->array, hull_2_bytes, cudaMemcpyHostToDevice));
+
+    hull_3_cpu = combine_hull(hull_1_cpu, hull_2_cpu);
+    hull_3_gpu = combine_hull_par(hull_1_gpu, hull_2_gpu);
+
+    hull_3_bytes = hull_3_gpu->size*sizeof(Line);
+
+    temp = (Line*)malloc(hull_3_bytes);
+    if(!temp){
+        fprintf(stderr, "Malloc failed");
+        exit(1);       
+    }
+
+    CHECK(cudaMemcpy(temp , hull_3_gpu->array, hull_3_bytes, cudaMemcpyDeviceToHost));
+
+
+    printf("Combine result: ");
+    for(int i = 0; i < hull_3_cpu->curr_size; i++){
+        if(!compare_lines(hull_3_cpu->array[i], temp[i])){
+            printf("Lines do not match: Point 1 cpu: (%f, %f),Point 2 cpu: (%f, %f), Point 1 gpu: (%f, %f), Point 2 gpu: (%f, %f)\n", 
+            hull_3_cpu->array[i].p.x,
+            hull_3_cpu->array[i].p.y,
+            hull_3_cpu->array[i].q.x,
+            hull_3_cpu->array[i].q.y,
+            temp[i].p.x,
+            temp[i].p.y,
+            temp[i].q.x,
+            temp[i].q.y);
+            state = false;
+        }
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+    printf("Size result: " );
+    if(hull_3_cpu->curr_size != hull_3_gpu->size){
+        printf("Sizes do not match: %lu, %lu\n", hull_3_cpu->curr_size, hull_3_gpu->size);
+        state = false;
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+}
+
+
+
+
+
+Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
+
+    time_t t;
+    double difference = u_bound - l_bound;
+    double offset_x_1 = 0;
+    double offset_y_1 = 0;
+    double offset_x_2 = 0;
+    double offset_y_2 = 0;
+    Point point_1;
+    Point point_2;
+    Line l;
+    srand((unsigned) time(&t));
+
+    Hull* hull = init_hull(num_of_lines * 2);
+    for(size_t i = 0; i < num_of_lines; i++){
+        offset_x_1 = rand() % (int)difference;
+        offset_y_1 = rand() % (int)difference;
+        offset_x_2 = rand() % (int)difference;
+        offset_y_2 = rand() % (int)difference;
+        point_1 = (Point) {.x = l_bound + offset_x_1, .y = l_bound + offset_y_1};
+        point_2 = (Point) {.x = l_bound + offset_x_2, .y = l_bound + offset_y_2};
+        l = init_line(point_1, point_2);
+        add_to_hull(hull, l);
+    }
+
+    return hull;
 }

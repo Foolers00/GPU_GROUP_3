@@ -114,5 +114,12 @@ void validate_minmax();
 */
 void test_split();
 
+/*
+    tests the combine hull function
+*/
+void test_combinehull();
+
 
 void printData(size_t *data, const size_t size);
+
+Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound);

@@ -79,3 +79,14 @@ Point_array* init_point_array(size_t max_size);
     for the threshold to expand and mallocs line array curr_size big 
 */
 Hull* init_hull(size_t max_size);
+
+
+/*
+    returns true if lines are same otherwise false
+*/
+bool compare_lines(Line l_1, Line l_2);
+
+/*
+    returns false if lines are same otherwise false
+*/
+bool compare_points(Point p_1, Point p_2);
