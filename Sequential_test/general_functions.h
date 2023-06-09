@@ -48,18 +48,24 @@
 #endif
 
 
+#ifndef OMP
+#define OMP
+#include <omp.h>
+#endif
+
+
 /*
     calculates the hull for the poitns in Point_array
 */
 Hull* quickhull(Point_array* points);
+Hull* new_quickhull(Point_array* points);
 
 /*
     calculates hull for all points in Point_array that are above/below
     the Line l depending on the value of side (UP == 1, DOWN == 0)
 */
-Hull* first_quickhull_split(Point_array* points, Line l, int side);
 Hull* quickhull_split(Point_array* points, Line l, int side);
-
+Hull* first_quickhull_split(Point_array* points, Line l, int side);
 /*
     calculates line which is made up of points p and q
 */

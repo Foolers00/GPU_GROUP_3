@@ -15,6 +15,25 @@ Hull* quickhull(Point_array* points){
     Line l_pq;
     Hull* hull_up = NULL;
     Hull* hull_down = NULL;
+
+    points_on_hull(points, &p, &q);
+    l_pq = (Line) { .p = p, .q = q };
+
+    hull_up = quickhull_split(points, l_pq, ABOVE);
+    hull_down = quickhull_split(points, l_pq, BELOW);
+
+    return combine_hull(hull_up, hull_down);
+
+}
+
+
+Hull* new_quickhull(Point_array* points){
+
+    Point p;
+    Point q;
+    Line l_pq;
+    Hull* hull_up = NULL;
+    Hull* hull_down = NULL;
     Point_array* points_above;
     Point_array* points_below;
 
@@ -37,12 +56,13 @@ Hull* quickhull(Point_array* points){
         }
     }
 
-    hull_up = first_quickhull_split(points, l_pq, ABOVE);
-    hull_down = first_quickhull_split(points, l_pq, BELOW);
+    hull_up = first_quickhull_split(points_above, l_pq, ABOVE);
+    hull_down = first_quickhull_split(points_below, l_pq, BELOW);
 
     return combine_hull(hull_up, hull_down);
 
 }
+
 
 Hull* first_quickhull_split(Point_array* points, Line l, int side){
     
@@ -79,7 +99,6 @@ Hull* first_quickhull_split(Point_array* points, Line l, int side){
     return hull_side;
 
 }
-
 
 Hull* quickhull_split(Point_array* points, Line l, int side){
     
@@ -124,6 +143,7 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
     return hull_side;
 
 }
+
 
 
 Line init_line(Point p, Point q){
