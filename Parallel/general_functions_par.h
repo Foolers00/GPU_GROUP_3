@@ -42,6 +42,7 @@
 
 Hull_par* quickhull_par(Point_array_par* points);
 
+Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side);
 
 Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side);
 

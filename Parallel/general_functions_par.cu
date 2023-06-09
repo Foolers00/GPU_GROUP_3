@@ -47,8 +47,8 @@ Hull_par* quickhull_par(Point_array_par* points){
     split_point_array(points, points_above, points_below, l_pq);
 
     // recursive call
-    hull_up = quickhull_split_par(points_above, l_pq, ABOVE);
-    hull_down = quickhull_split_par(points_below, l_pq, BELOW);
+    hull_up = first_quickhull_split_par(points_above, l_pq, ABOVE);
+    hull_down = first_quickhull_split_par(points_below, l_pq, BELOW);
 
     // combine
     hull_result_gpu = combine_hull_par(hull_up, hull_down);
@@ -68,6 +68,45 @@ Hull_par* quickhull_par(Point_array_par* points){
 
 }
 
+Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side){
+
+    // vars
+    Point_array_par* points_side = NULL;
+    Line* l_p_max;
+    Line* l_max_q;
+    Hull_par* hull_side = NULL;
+
+    // set memory
+    points_side = points;
+
+    // find point with max distance
+    //max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
+    // l_p_max = (Line) { .p = l.p, .q = max_point };
+    // l_max_q = (Line) { .p = max_point, .q = l.q };
+
+
+    if(points_side->size == 0) {
+        hull_side = init_hull_par_gpu(1);
+        CHECK(cudaMemcpy(hull_side->array , l, sizeof(Line), cudaMemcpyDeviceToDevice));
+        hull_side->size = 1;
+    }else if(points_side->size == 1){
+        hull_side = init_hull_par_gpu(2);
+        CHECK(cudaMemcpy(hull_side->array , l_p_max, sizeof(Line), cudaMemcpyDeviceToDevice));
+        CHECK(cudaMemcpy(hull_side->array+1 , l_max_q, sizeof(Line), cudaMemcpyDeviceToDevice));
+        hull_side->size = 2;
+
+    }else {
+        //points_side->curr_size > 1
+        hull_side = combine_hull_par(
+                quickhull_split_par(points_side, l_p_max, side),
+                quickhull_split_par(points_side, l_max_q, side)
+        );
+    }
+
+    return hull_side;
+
+}
+
 
 Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
 
@@ -80,15 +119,14 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
     // set memory
     points_side = init_point_array_par_gpu(0);
 
+    // split array
+    split_point_array_side(points, points_side, l, side);
+    free_point_array_par_gpu(points);
+
     // find point with max distance
     //max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
     // l_p_max = (Line) { .p = l.p, .q = max_point };
     // l_max_q = (Line) { .p = max_point, .q = l.q };
-
-
-    // split array
-    split_point_array_side(points, points_side, l, side);
-    free_point_array_par_gpu(points);
 
 
     if(points_side->size == 0) {
