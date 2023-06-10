@@ -8,69 +8,6 @@
 #endif
 
 
-Point* test_sequence_1(){
-    Point* p = (Point*)malloc(sizeof(Point));
-    p->x = 5;
-    p->y = 5;
-    return p;
-}
-
-
-Point_array* test_sequence_2(){
-    Point_array* points = NULL;
-    points = init_point_array(6);
-
-    Point u, v, w;
-
-    u.x = 100;
-    u.y = 100;
-
-    v.x = 200;
-    v.y = 200;
-
-    w.x = 300;
-    w.y = 300;
-
-    add_to_point_array(points, u);
-    add_to_point_array(points, v);
-    add_to_point_array(points, w);
-
-    print_point_array(points);
-
-    return points;
-}
-
-
-Hull* test_sequence_3(){
-
-    Hull* hull = NULL;
-    hull = init_hull(6);
-    Point u, v, w;
-
-    Line l_uv;
-    Line l_vw;
-    Line l_uw;
-
-    u.x = 100;
-    u.y = 100;
-
-    v.x = 200;
-    v.y = 200;
-
-    w.x = 300;
-    w.y = 300;
-
-    l_uv = init_line(u, v);
-    l_vw = init_line(v, w);
-    l_uw = init_line(u, w);
-
-    add_to_hull(hull, l_uv);
-    add_to_hull(hull, l_vw);
-    add_to_hull(hull, l_uw);
-
-    return hull;
-
-}
 
 
 Point_array* test_sequence_4_1(){
@@ -273,16 +210,17 @@ void test_prescan(){
 
     for(int i = 0; i < iterations; i++){
         tic = clock();
-        master_stream_prescan(gpuRef, array, array_size, array_bytes, EXCLUSIVE);
-        toc = clock();
-        new_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
-        new_scan_avg += new_scan;
-
-        tic = clock();
         master_prescan(gpuRef, array, array_size, array_bytes, EXCLUSIVE);
         toc = clock();
         old_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
         old_scan_avg += old_scan;
+
+        tic = clock();
+        //master_stream_prescan(gpuRef, array, array_size, array_bytes, EXCLUSIVE);
+        thrust::exclusive_scan(array, array+array_size, gpuRef);
+        toc = clock();
+        new_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
+        new_scan_avg += new_scan;
     }
 
     old_scan_avg /= iterations;
@@ -339,7 +277,7 @@ void test_prescan_gpu(){
     size_t* i_array_gpu;
     size_t* o_array_gpu;
 
-    array_size = rand()%200000000;
+    array_size = 200000000;
     array_bytes = array_size*(sizeof(size_t));
 
     #if MEMORY_MODEL == STD_MEMORY
@@ -389,18 +327,19 @@ void test_prescan_gpu(){
 
     for(int i = 0; i < iterations; i++){
         tic = clock();
-        master_stream_prescan_gpu(o_array_gpu, i_array_gpu, array_fsize, array_fbytes, 
-        array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE);
-        toc = clock();
-        new_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
-        new_scan_avg += new_scan;
-
-        tic = clock();
         master_prescan_gpu(o_array_gpu, i_array_gpu, array_fsize, array_fbytes, 
         array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE);
         toc = clock();
         old_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
         old_scan_avg += old_scan;
+
+        tic = clock();
+        //master_stream_prescan_gpu(o_array_gpu, i_array_gpu, array_fsize, array_fbytes, 
+        //array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE);
+        thrust::exclusive_scan(array, array+array_size, gpuRef); //unfair
+        toc = clock();
+        new_scan = (double)(toc - tic)/CLOCKS_PER_SEC;
+        new_scan_avg += new_scan;
     }
 
     old_scan_avg /= iterations;
@@ -536,6 +475,7 @@ void test_split(){
     clock_t toc;
     double cpu_time;
     double gpu_time;
+    double thrust_time;
 
     // main array var
     int size;
@@ -554,6 +494,13 @@ void test_split(){
     Point_array_par* temp_above;
     Point_array_par* temp_below;
 
+    // thrust var
+    thrust::device_vector<Point> points_thrust; 
+    thrust::device_vector<Point> points_above_thrust; 
+    thrust::device_vector<Point> points_below_thrust;
+    std::vector<Point> points_temp_above_thrust; 
+    std::vector<Point> points_temp_below_thrust;
+
     // point on hull var
     Point p;
     Point q;
@@ -564,14 +511,21 @@ void test_split(){
     bool state = true;
 
     // set up array
-    size = 10000000;
+    size = 1000000;
     l_bound = 0;
     u_bound = 100000000;
 
     points_cpu = generate_random_points(size, l_bound, u_bound);
     points_gpu = init_point_array_par(size);
+    points_thrust.resize(size);
 
+    // copy memory to gpu
     memcpy(points_gpu->array, points_cpu->array, sizeof(Point)*size);
+
+    // copy memory to host thrust
+    thrust::copy(&points_cpu->array[0], &points_cpu->array[size], points_thrust.begin());
+     
+
 
     tic = clock();
     // init above/below arrays
@@ -613,6 +567,7 @@ void test_split(){
 
     tic = clock();
     // splits array into above and below
+
     split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
     // split_point_array_side(points_gpu, points_above_gpu, l_pq, ABOVE);
     // split_point_array_side(points_gpu, points_below_gpu, l_pq, BELOW);
@@ -620,12 +575,25 @@ void test_split(){
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
+    tic = clock();
+
+    thrust_split_point_array(points_thrust, points_above_thrust, points_below_thrust, l_pq);
+
+    toc = clock();
+    thrust_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
     // copy back results
     temp_above = init_point_array_par(points_above_gpu->size*sizeof(Point));
     temp_below = init_point_array_par(points_below_gpu->size*sizeof(Point));
 
     CHECK(cudaMemcpy(temp_above->array, points_above_gpu->array, points_above_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
     CHECK(cudaMemcpy(temp_below->array, points_below_gpu->array, points_below_gpu->size*sizeof(Point), cudaMemcpyDeviceToHost));
+    
+    points_temp_above_thrust.resize(points_above_thrust.size());
+    points_temp_below_thrust.resize(points_below_thrust.size());
+    thrust::copy(points_above_thrust.begin(), points_above_thrust.end(), points_temp_above_thrust.begin());
+    thrust::copy(points_below_thrust.begin(), points_below_thrust.end(), points_temp_below_thrust.begin());
+
 
     // compare results
     printf("Above results: ");
@@ -635,6 +603,29 @@ void test_split(){
             printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
             points_above_cpu->array[i].x, temp_above->array[i].x,
             points_above_cpu->array[i].y, temp_above->array[i].y);
+
+            state = false;
+
+            break;
+        }
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+    state = true;
+
+    printf("Above results thrust: ");
+    for(size_t i = 0; i < points_above_cpu->curr_size; i++){
+        if(!compare_points(points_above_cpu->array[i], points_temp_above_thrust[i])){
+
+            printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
+            points_above_cpu->array[i].x, points_temp_above_thrust[i].x,
+            points_above_cpu->array[i].y, points_temp_above_thrust[i].y);
 
             state = false;
 
@@ -673,6 +664,28 @@ void test_split(){
 
     state = true;
 
+    printf("Below results thrust: ");
+    for(size_t i = 0; i < points_below_cpu->curr_size; i++){
+        if(!compare_points(points_below_cpu->array[i], points_temp_below_thrust[i])){
+            printf("x or y are not the same: x: %f, %f, y: %f, %f\n",
+            points_below_cpu->array[i].x, points_temp_below_thrust[i].x,
+            points_below_cpu->array[i].y, points_temp_below_thrust[i].y);
+
+            state = false;
+
+            break;
+        }
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+    state = true;
+
     printf("Size results: ");
     if(points_above_cpu->curr_size != points_above_gpu->size ||
         points_below_cpu->curr_size != points_below_gpu->size){
@@ -689,10 +702,28 @@ void test_split(){
        printf("Comparison Failed\n"); 
     }
 
+    state = true;
+
+    printf("Size results thurst: ");
+    if(points_above_cpu->curr_size != points_temp_above_thrust.size() ||
+        points_below_cpu->curr_size != points_temp_below_thrust.size()){
+            printf("Sizes do not match: Above: %lu, %lu, Below: %lu, %lu\n",
+            points_above_cpu->curr_size, points_temp_above_thrust.size(), points_below_cpu->curr_size,
+            points_temp_below_thrust.size());
+            state = false;
+    }
 
     if(state){
         printf("Comparison Success\n");
-        printf("CPU time: %f, GPU time: %f\n", cpu_time, gpu_time);
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+        printf("CPU time: %f, GPU time: %f, Thrust time: %f\n", cpu_time, gpu_time, thrust_time);
     }
 
 
@@ -710,7 +741,7 @@ void test_split(){
     CHECK(cudaFree(l_pq_gpu));
 
     // reset device
-    CHECK(cudaDeviceReset());
+    //CHECK(cudaDeviceReset());
 
 }
 

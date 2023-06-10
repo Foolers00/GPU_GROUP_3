@@ -56,6 +56,11 @@
 #endif
 
 
+#ifndef THRUST_SPLIT
+#define THRUST_SPLIT
+#include "../Thrust/thrust_split.h"
+#endif
+
 
 Point* test_sequence_1();
 

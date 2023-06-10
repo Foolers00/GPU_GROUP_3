@@ -23,9 +23,9 @@ int main(){
 
     //validate_minmax();
 
-    //test_split();
+    test_split();
 
-    test_combinehull();
+    //test_combinehull();
 
     return 0;
 }

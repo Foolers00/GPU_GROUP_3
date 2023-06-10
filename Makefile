@@ -1,12 +1,12 @@
 .PHONY: all clean
 
 NVCC=nvcc
-CUDAFLAGS= -std=c++11 -O2 -lineinfo
+CUDAFLAGS= -std=c++14 -O2 -lineinfo
 
 all: prog.out
 
-prog.out: main.o general_functions.o dynamic_array.o vector.o general_functions_par.o prefix_scan.o max_distance.o minmax.o split.o data_types.o data_types_par.o test.o
-	$(NVCC) $(CUDAFLAGS) -o prog.out main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o max_distance.o minmax.o split.o data_types.o data_types_par.o -lm
+prog.out: main.o general_functions.o dynamic_array.o vector.o general_functions_par.o prefix_scan.o max_distance.o minmax.o split.o data_types.o data_types_par.o test.o thrust_split.o
+	$(NVCC) $(CUDAFLAGS) -o prog.out main.o general_functions.o dynamic_array.o test.o vector.o general_functions_par.o prefix_scan.o max_distance.o minmax.o split.o data_types.o data_types_par.o thrust_split.o -lm
 
 
 main.o: main.cu Test/test.h
@@ -49,6 +49,9 @@ minmax.o: Parallel/minmax.cu Parallel/minmax.h Data_Types/data_types_par.h Test/
 
 split.o: Parallel/split.cu Parallel/split.h
 	$(NVCC) $(CUDAFLAGS) -c Parallel/split.cu
+
+thrust_split.o: Thrust/thrust_split.cu Thrust/thrust_split.h Data_Types/data_types_par.h
+	$(NVCC) $(CUDAFLAGS) -c Thrust/thrust_split.cu
 
 clean:
 	rm -rf prog.out *.o *.so
