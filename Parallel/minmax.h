@@ -30,18 +30,13 @@ typedef struct{
 }minmaxPoint;
 
 /*
- * writes the point with minimal x value in points to min and with maximal x value to max.
+ * returns line l_pq gpu mem adress where l_pq.p is min and l_pq.q is max.
  * Same as points_on_hull in sequential. Uses several kernel calls.
  */
-void minmax_cuda(Point_array_par* points, Point* min, Point* max);
+void minmax_cuda(Point_array_par* points, Line** l_pq);
+
 
 /*
- * returns line l_pq gpu mem adress where l_pq.p is min and l_pq.q is max
- * Same as points_on_hull in sequential. Uses several kernel calls.
-*/
-//void minmax_cuda(Point_array_par* points, Line** l_pq);
-
-/*
- *
+ * kernel function calculating min and max (in terms of x coordinates) elements of points
  */
 __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result);

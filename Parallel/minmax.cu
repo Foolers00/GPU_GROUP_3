@@ -52,7 +52,7 @@ __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
 }
 
 //TODO: calculate both min and max, not only max.
-void minmax_cuda(Point_array_par* points, Point* min, Point* max){
+void minmax_cuda(Point_array_par* points, Line** l_pq){
     int size = points->size;
     int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
@@ -85,8 +85,10 @@ void minmax_cuda(Point_array_par* points, Point* min, Point* max){
     //deal with the rest
     minmax_kernel<<<1, threadsPerBlock>>>(points_in, size, points_out);
 
-    CHECK(cudaMemcpy(max, points_out.max, sizeof(Point), cudaMemcpyDeviceToHost));
-    CHECK(cudaMemcpy(min, points_out.min, sizeof(Point), cudaMemcpyDeviceToHost));
+    // allocate GPU mem at address handed over as arguments
+    CHECK(cudaMalloc(l_pq, sizeof(Line)));
+    CHECK(cudaMemcpy(&(*l_pq)->q, points_out.max, sizeof(Point), cudaMemcpyDeviceToDevice));
+    CHECK(cudaMemcpy(&(*l_pq)->p, points_out.min, sizeof(Point), cudaMemcpyDeviceToDevice));
 
     CHECK(cudaFree(points_out.min));
     CHECK(cudaFree(points_out.max));

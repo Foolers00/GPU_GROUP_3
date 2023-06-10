@@ -23,7 +23,7 @@ Hull_par* quickhull_par(Point_array_par* points){
     dev = 0;
     CHECK(cudaSetDevice(dev));
 
-    Line* l_pq;
+    Line* l_pq; //device pointer
     Hull_par* hull_up = NULL;
     Hull_par* hull_down = NULL;
     Hull_par* hull_result_gpu = NULL;
@@ -80,7 +80,7 @@ Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side){
     points_side = points;
 
     // find point with max distance
-    //max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
+    max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer, l is a device pointer
     // l_p_max = (Line) { .p = l.p, .q = max_point };
     // l_max_q = (Line) { .p = max_point, .q = l.q };
 
@@ -232,6 +232,6 @@ Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2){
 
 
 void points_on_hull_par(Point_array_par* points, Line** l_pq){
-    //minmax_cuda(points, l_pq);
+    minmax_cuda(points, l_pq);
 }
 
