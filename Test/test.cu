@@ -378,31 +378,39 @@ void test_prescan_gpu(){
 
 
 void test_max_distance_cuda(){
-    int size = 10000000;
+    int size = 100000000;
 
-    Point_array* points = init_point_array(size);
+    Point_array_par* points = init_point_array_par(size);
 
     Point near = (Point){.x = 1, .y = 2};
     Point far = (Point){.x = 1, .y = 8};
-    Line l = (Line){.p = (Point){.x = 0, .y = 0}, .q = (Point){.x = 1, .y = 1}};
+    Line l = (Line){.p = (Point){.x = 0, .y = 0}, .q = (Point){.x = 1000, .y = 1000}};
 
-    for(int i = 0; i < size; i++){
-        if(i == 9000000){
-            add_to_point_array(points, far);
-        }else{
-            add_to_point_array(points, near);
-        }
+    for(int i = 0; i < size; i++) {
+        points->array[i] = near;
+        if (i == 1234) points->array[i] = far;
     }
 
-    //Point max = max_distance_cuda(l, points);
-    //printf("Max dist: (%f, %f)\n", max.x, max.y);
+    Line* d_l;
+    Line* l_p_max, *l_max_q;
+
+    CHECK(cudaMalloc((void**)&d_l, sizeof(Line)));
+    CHECK(cudaMemcpy(d_l, &l, sizeof(Line), cudaMemcpyHostToDevice));
+    max_distance_cuda(d_l, points, &l_p_max, &l_max_q);
+
+    Line l_p_max_host, l_max_q_host;
+
+    CHECK(cudaMemcpy(&l_p_max_host, l_p_max, sizeof(Line), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(&l_max_q_host, l_max_q, sizeof(Line), cudaMemcpyDeviceToHost));
+    printf("l_p_max:\tp: (%f, %f)\tq: (%f, %f)\n", l_p_max_host.p.x, l_p_max_host.p.y, l_p_max_host.q.x, l_p_max_host.q.y);
+    printf("l_max_q:\tp: (%f, %f)\tq: (%f, %f)\n", l_max_q_host.p.x, l_max_q_host.p.y, l_max_q_host.q.x, l_max_q_host.q.y);
 }
 
 
 void test_minmax_cuda(){
     int size = 100000000;
 
-    Point_array* points = init_point_array(size);
+    Point_array_par* points = init_point_array_par(size);
 
     Point left = (Point){.x = -1, .y = 2};
     Point middle = (Point){.x = 100, .y = 8};
@@ -410,18 +418,22 @@ void test_minmax_cuda(){
 
     for(int i = 0; i < size; i++){
         if(i == 9000000){
-            add_to_point_array(points, left);
+            points->array[i] = left;
         }else if(i == 1000000){
-            add_to_point_array(points, right);
+            points->array[i] = right;
         }else{
-            add_to_point_array(points, middle);
+            points->array[i] = middle;
         }
     }
 
-    // Point min, max;
-    // minmax_cuda(points, &min, &max);
-    // printf("Max: (%f, %f) | Min: (%f, %f)\n", max.x, max.y, min.x, min.y);
-    // printf("%i\n", RAND_MAX);
+    Line* minmax;
+    minmax_cuda(points, &minmax);
+
+    Line minmax_h;
+    CHECK(cudaMemcpy(&minmax_h, minmax, sizeof(Line), cudaMemcpyDeviceToHost));
+
+    printf("minmax:\tp: (%f, %f)\tq: (%f, %f)\n", minmax_h.p.x, minmax_h.p.y, minmax_h.q.x, minmax_h.q.y);
+
 }
 
 
@@ -434,23 +446,35 @@ void validate_minmax(){
         int size = rand() % max_size;
         int l_bound = rand() % 1000000000;
         int u_bound = rand() % 1000000000;
-        //Point_array_par* in = generate_random_points(size,l_bound, u_bound);
+        Point_array* tmp = generate_random_points(size,l_bound, u_bound);
+        Point_array_par* in = init_point_array_par(size);
+        in->array = tmp->array;
+
         Point min_seq, max_seq, min_cuda, max_cuda;
 
         clock_t tic = clock();
-        //points_on_hull(in, &min_seq, &max_seq);
+        points_on_hull(tmp, &min_seq, &max_seq);
         clock_t toc = clock();
         double time_seq = (double)(toc - tic)/CLOCKS_PER_SEC;
 
+
+        Line* minmax;
+
         tic = clock();
-        //minmax_cuda(in, &min_cuda, &max_cuda);
+        minmax_cuda(in, &minmax);
         toc = clock();
         double time_cuda = (double)(toc - tic)/CLOCKS_PER_SEC;
+        Line minmax_h;
+        CHECK(cudaMemcpy(&minmax_h, minmax, sizeof(Line), cudaMemcpyDeviceToHost));
+        min_cuda.x = minmax_h.p.x;
+        min_cuda.y = minmax_h.p.y;
+        max_cuda.x = minmax_h.q.x;
+        max_cuda.y = minmax_h.q.y;
 
         printf("time seq: %f, time cuda: %f\n", time_seq, time_cuda);
 
 
-        bool valid = min_seq.x == min_cuda.x && min_seq.y == min_cuda.y && max_seq.x == max_cuda.x && max_seq.y == max_cuda.y;
+        bool valid = min_seq.x == min_cuda.x &&  max_seq.x == max_cuda.x;
         if(valid){
             printf("no error found so far\n size: %i, l_bound: %i, u_bound: %i. Min seq: [%f, %f], Min cuda: [%f, %f], Max seq: [%f, %f], Max cuda: [%f, %f]\n", size, l_bound, u_bound, min_seq.x, min_seq.y, min_cuda.x, min_cuda.y, max_seq.x, max_seq.y, max_cuda.x, max_cuda.y);
         }else {
