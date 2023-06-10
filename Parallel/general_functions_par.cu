@@ -124,7 +124,7 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
     free_point_array_par_gpu(points);
 
     // find point with max distance
-    //max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
+    max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
     // l_p_max = (Line) { .p = l.p, .q = max_point };
     // l_max_q = (Line) { .p = max_point, .q = l.q };
 

@@ -16,16 +16,18 @@ int main(){
     // Hull* hull = quickhull(points);
 
     //test_sequence_2();
-    //test_prescan();
-    //test_prescan_gpu();
+    test_prescan();
+    test_prescan_gpu();
 
     //test_minmax_cuda();
 
-    test_max_distance_cuda();
+    //test_max_distance_cuda();
 
     //validate_minmax();
 
     //test_combinehull();
+
+    //test_quickhull();
 
     return 0;
 }
