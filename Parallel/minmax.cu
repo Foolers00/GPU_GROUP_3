@@ -51,7 +51,6 @@ __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
     }
 }
 
-//TODO: calculate both min and max, not only max.
 void minmax_cuda(Point_array_par* points, Line** l_pq){
     int size = points->size;
     int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
@@ -75,11 +74,6 @@ void minmax_cuda(Point_array_par* points, Line** l_pq){
         CHECK(cudaMemcpy(points_in.min, points_out.min, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice));
         size = numBlocks;
         numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
-//        CHECK(cudaFree(d_points_out->min));
-//        CHECK(cudaFree(d_points_out->max));
-//        CHECK(cudaFree(d_points_out));
-//        CHECK(cudaMalloc((void**)&d_points_out_min, numBlocks * sizeof(Point)));
-//        CHECK(cudaMalloc((void**)&d_points_out_max, numBlocks * sizeof(Point)));
     }
 
     //deal with the rest
@@ -95,4 +89,35 @@ void minmax_cuda(Point_array_par* points, Line** l_pq){
     CHECK(cudaFree(points_in.min));
     CHECK(cudaFree(points_in.max));
 
+}
+
+int main(int argc, char** argv){
+
+    int size = 100000000;
+
+    Point_array_par* points = init_point_array_par(size);
+
+    Point left = (Point){.x = -1, .y = 2};
+    Point middle = (Point){.x = 100, .y = 8};
+    Point right = (Point){.x = 200, .y = 3};
+
+    for(int i = 0; i < size; i++){
+        if(i == 9000000){
+            points->array[i] = left;
+        }else if(i == 1000000){
+            points->array[i] = right;
+        }else{
+            points->array[i] = middle;
+        }
+    }
+
+    Line* minmax;
+    minmax_cuda(points, &minmax);
+
+    Line minmax_h;
+    CHECK(cudaMemcpy(&minmax_h, minmax, sizeof(Line), cudaMemcpyDeviceToHost));
+
+    printf("minmax:\tp: (%f, %f)\tq: (%f, %f)\n", minmax_h.p.x, minmax_h.p.y, minmax_h.q.x, minmax_h.q.y);
+
+    return 0;
 }
