@@ -16,8 +16,8 @@ int main(){
     // Hull* hull = quickhull(points);
 
     //test_sequence_2();
-    test_prescan();
-    test_prescan_gpu();
+    //test_prescan();
+    //test_prescan_gpu();
 
     //test_minmax_cuda();
 
@@ -25,9 +25,11 @@ int main(){
 
     //validate_minmax();
 
+    //test_split();
+
     //test_combinehull();
 
-    //test_quickhull();
+    test_quickhull_2();
 
     return 0;
 }

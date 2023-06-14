@@ -130,8 +130,15 @@ void test_combinehull();
     tests parallel quickhull
 */
 void test_quickhull();
+void test_quickhull_2();
 
 
 void printData(size_t *data, const size_t size);
 
 Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound);
+
+
+void writePointArrayToCSV(Point_array* points);
+void writeHullArrayToCSV(Hull* hull);
+void writeHullparArrayToCSV(Hull_par* hull);
+void readPointsFromCSV(const char* filename, Point_array_par** points);

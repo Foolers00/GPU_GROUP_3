@@ -37,7 +37,7 @@ __global__ void setbits_side(size_t *bits, Point* points, Line* l,
 
 
 __global__ void movevalues(Point* o_data, Point* i_data, size_t* bit_data,
-                           size_t* index_data, size_t array_fsize, int block_offset);                        
+                           size_t* index_data, size_t array_fsize, size_t array_size, int block_offset);                        
 
 __device__ void check_point_location_gpu(Line* l, Point z, int* result);
 

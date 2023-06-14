@@ -349,7 +349,7 @@ void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t 
 
 
 void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
-                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode){
+                            size_t array_grid_size, size_t array_rem_grid_size, size_t array_loop_cnt, int mode){
 
 
     ///////////////////////////
@@ -435,7 +435,6 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     // memory set up
     CHECK(cudaMalloc((size_t **)&t_data, array_fbytes));
 
-
     CHECK(cudaMalloc((size_t **)&aux_data, aux_fbytes));
     CHECK(cudaMalloc((size_t **)&aux_2_data, aux_2_fbytes));
     CHECK(cudaMalloc((size_t **)&aux_3_data, aux_3_fbytes));
@@ -499,7 +498,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     }
     if(aux_3_rem_grid_size > 0){
         add_block<<<aux_3_rem_grid_size, BLOCKSIZE>>>
-        (aux_3_data, aux_4_data, aux_3_loop_cnt);       
+        (aux_3_data, aux_4_data, aux_3_loop_cnt);      
     }
 
     
@@ -520,7 +519,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     }
     if(aux_rem_grid_size > 0){
         add_block<<<aux_rem_grid_size, BLOCKSIZE>>>
-        (aux_data, aux_2_data, aux_loop_cnt);       
+        (aux_data, aux_2_data, aux_loop_cnt);      
     }
 
     // array+aux
@@ -530,9 +529,8 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     }
     if(array_rem_grid_size > 0){
         add_block<<<array_rem_grid_size, BLOCKSIZE>>>
-        (t_data, aux_data, array_loop_cnt);      
+        (t_data, aux_data, array_loop_cnt);   
     }
-    
 
     if(mode == EXCLUSIVE){
         // array gets shifted by one for exclusive sum
@@ -551,7 +549,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
         o_array = t_data;
         t_data = temp;
     }
-
+    
     // free memory
     CHECK(cudaFree(t_data));
 

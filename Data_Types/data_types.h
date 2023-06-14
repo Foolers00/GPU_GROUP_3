@@ -97,6 +97,7 @@ Hull* init_hull(size_t max_size);
 */
 bool compare_lines(Line l_1, Line l_2);
 
+
 /*
     returns false if lines are same otherwise false
 */

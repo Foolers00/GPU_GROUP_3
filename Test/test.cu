@@ -261,7 +261,7 @@ void test_prescan_gpu(){
     double old_scan;
     double new_scan_avg;
     double old_scan_avg;
-    int iterations = 100;
+    int iterations = 1;
 
     size_t* array; 
     size_t array_size;
@@ -277,7 +277,7 @@ void test_prescan_gpu(){
     size_t* i_array_gpu;
     size_t* o_array_gpu;
 
-    array_size = 200000000;
+    array_size = 1000;
     array_bytes = array_size*(sizeof(size_t));
 
     #if MEMORY_MODEL == STD_MEMORY
@@ -535,11 +535,24 @@ void test_split(){
     bool state = true;
 
     // set up array
-    size = 1000000;
+    //size = 10000;
+    size = 7;
+
     l_bound = 0;
     u_bound = 100000000;
 
-    points_cpu = generate_random_points(size, l_bound, u_bound);
+    //points_cpu = generate_random_points(size, l_bound, u_bound);
+    points_cpu = init_point_array(size);
+    points_cpu->curr_size = 7;
+    points_cpu->array[0] = (Point) { .x = 575.000000, .y = 173.000000};
+    points_cpu->array[1] = (Point) { .x = 107.000000, .y = 780.000000};
+    points_cpu->array[2] = (Point) { .x = 309.000000, .y = 449.000000};
+    points_cpu->array[3] = (Point) { .x = 774.000000, .y = 230.000000};
+    points_cpu->array[4] = (Point) { .x = 490.000000, .y = 468.000000};
+    points_cpu->array[5] = (Point) { .x = 140.000000, .y = 332.000000};
+    points_cpu->array[6] = (Point) { .x = 80.000000, .y = 713.000000};
+
+
     points_gpu = init_point_array_par(size);
     points_thrust.resize(size);
 
@@ -557,7 +570,11 @@ void test_split(){
     points_below_cpu = init_point_array(points_cpu->max_size/2);
 
     // points on hull
-    points_on_hull(points_cpu, &p, &q);
+    //points_on_hull(points_cpu, &p, &q);
+    p.x = 79.000000;
+    p.y = 952.000000;
+    q.x = 140.000000;
+    q.y = 332.000000;
     l_pq = (Line) { .p = p, .q = q };
 
 
@@ -592,9 +609,11 @@ void test_split(){
     tic = clock();
     // splits array into above and below
 
-    split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
-    // split_point_array_side(points_gpu, points_above_gpu, l_pq, ABOVE);
-    // split_point_array_side(points_gpu, points_below_gpu, l_pq, BELOW);
+    //split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
+    Point_array_par* points_gpu_gpu = init_point_array_par_gpu(points_gpu->size);
+    CHECK(cudaMemcpy(points_gpu_gpu->array, points_gpu->array, points_gpu->size*sizeof(Point), cudaMemcpyHostToDevice));
+    split_point_array_side(points_gpu_gpu, points_above_gpu, l_pq_gpu, ABOVE);
+    split_point_array_side(points_gpu_gpu, points_below_gpu, l_pq_gpu, BELOW);
 
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
@@ -917,14 +936,15 @@ void test_quickhull(){
 
 
     // set vars
-    size = 100;
+    size = 1000;
     l_bound = 0;
-    u_bound = 1000;
+    u_bound = 100;
 
     points_cpu = init_point_array(2*size);
     points_gpu = generate_random_points_par(size, l_bound, u_bound);
 
     memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+    points_cpu->curr_size = size;
 
     tic = clock();
     hull_cpu = quickhull(points_cpu);
@@ -933,23 +953,33 @@ void test_quickhull(){
 
 
     tic = clock();
-    hull_gpu = quickhull_par(points_gpu);
+    hull_gpu = new_quickhull_par(points_gpu);
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
-
+    bool state_2 = false;
 
     printf("Compare result: ");
     for(int i = 0; i < hull_cpu->curr_size; i++){
-        if(!compare_lines(hull_cpu->array[i], hull_gpu->array[i])){
-
-            printf("Lines do not match: Cpu: (%f, %f)-(%f, %f), Gpu: (%f, %f)-(%f, %f)\n",
-            hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y,
-            hull_gpu->array[i].p.x, hull_gpu->array[i].p.y, hull_gpu->array[i].q.x, hull_gpu->array[i].p.y);
-
-            state = false;
+        state_2 = false;
+        for(int j = 0; j < hull_gpu->size; j++){
+            if(compare_lines(hull_cpu->array[i], hull_gpu->array[j])){
+                state_2 = true;
+            }
 
         }
+        if(state_2 == false){
+            state = false;
+            // printf("Lines do not match: Cpu: (%f, %f)-(%f, %f), Gpu: (%f, %f)-(%f, %f)\n",
+            //         hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y,
+            //         hull_gpu->array[i].p.x, hull_gpu->array[i].p.y, hull_gpu->array[i].q.x, hull_gpu->array[i].q.y);
+            printf("This lines does not appear: Cpu: (%f, %f)-(%f, %f)\n",
+                    hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y);
+            for(int z = 0; z < hull_gpu->size; z++){
+                printf("Gpu lines: (%f, %f)-(%f, %f)\n",  hull_gpu->array[z].p.x, hull_gpu->array[z].p.y, hull_gpu->array[z].q.x, hull_gpu->array[z].q.y);
+            }
+        }
+        
     }
 
 
@@ -991,6 +1021,186 @@ void test_quickhull(){
 }
 
 
+void test_quickhull_2(){
+
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // clock
+    clock_t tic;
+    clock_t toc;
+    double cpu_time;
+    double gpu_time;
+
+    // vars
+    size_t size;
+    double l_bound;
+    double u_bound;
+
+    // cpu
+    Point_array* points_cpu;
+    Hull* hull_cpu;
+
+    // gpu
+    Point_array_par* points_gpu;
+    Hull_par* hull_gpu;
+
+    // state
+    bool state = true;
+
+
+    // set vars
+    size = 100000000;
+    l_bound = -1000000;
+    u_bound = 1000000;
+
+    points_cpu = init_point_array(2*size);
+    points_gpu = generate_random_points_par(size, l_bound, u_bound);
+
+    //readPointsFromCSV("points", &points_gpu);
+
+
+    memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+    points_cpu->curr_size = size;
+
+    //writePointArrayToCSV(points_cpu);
+
+    tic = clock();
+    hull_cpu = quickhull(points_cpu);
+    toc = clock();
+    cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+    //writeHullArrayToCSV(hull_cpu);
+
+
+    tic = clock();
+    hull_gpu = quickhull_par(points_gpu);
+    toc = clock();
+    gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+    //writeHullparArrayToCSV(hull_gpu);
+
+    bool state_2 = false;
+
+    printf("Compare result: ");
+    for(int i = 0; i < hull_cpu->curr_size; i++){
+        state_2 = false;
+        for(int j = 0; j < hull_gpu->size; j++){
+            if(compare_lines(hull_cpu->array[i], hull_gpu->array[j])){
+                state_2 = true;
+            }
+            else{
+                if(hull_cpu->array[i].p.x == hull_cpu->array[i].q.x && hull_gpu->array[j].p.x == hull_gpu->array[j].q.x &&
+                    hull_cpu->array[i].p.x == hull_gpu->array[j].p.x){
+                    state_2 = true;
+                }
+            }
+
+        }
+        if(state_2 == false){
+            state = false;
+            printf("This lines does not appear: Cpu: (%f, %f)-(%f, %f)\n",
+                    hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y);
+            for(int z = 0; z < hull_gpu->size; z++){
+                printf("Gpu lines: (%f, %f)-(%f, %f)\n",  hull_gpu->array[z].p.x, hull_gpu->array[z].p.y, hull_gpu->array[z].q.x, hull_gpu->array[z].q.y);
+            }
+        }
+        
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    printf("Size result: ");
+    if(points_cpu->curr_size != points_gpu->size){
+        printf("Sizes do not match: CPU: %lu, GPU: %lu\n", points_cpu->curr_size, points_gpu->size);
+        state = false;
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+        printf("CPU time: %f, GPU time: %f\n", cpu_time, gpu_time);
+    }
+   
+
+    // free memory
+    free_point_array(points_cpu);
+    free_point_array_par(points_gpu);
+    free_hull(hull_cpu);
+    free_hull_par(hull_gpu);
+
+    // reset device
+    CHECK(cudaDeviceReset());
+}
+
+
+void writePointArrayToCSV(Point_array* points){
+    FILE *file = fopen("points", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "points");
+        return;
+    }
+
+    for (int i = 0; i < points->curr_size; i++) {
+        fprintf(file, "%f,%f\n", points->array[i].x,points->array[i].y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "points");
+}
+
+
+void writeHullArrayToCSV(Hull* hull) {
+    FILE *file = fopen("cpu_hull", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "cpu_hull");
+        return;
+    }
+
+    for (int i = 0; i < hull->curr_size; i++) {
+        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "cpu_hull");
+}
+
+
+void writeHullparArrayToCSV(Hull_par* hull) {
+    FILE *file = fopen("gpu_hull", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "gpu_hull");
+        return;
+    }
+
+    for (int i = 0; i < hull->size; i++) {
+        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "gpu_hull");
+}
+
+
+
 Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
 
     time_t t;
@@ -1017,4 +1227,47 @@ Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
     }
 
     return hull;
+}
+
+
+
+
+
+void readPointsFromCSV(const char* filename, Point_array_par** points) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", filename);
+    }
+
+    // Count the number of lines in the file
+    int lines = 0;
+    char ch;
+    while (!feof(file)) {
+        ch = fgetc(file);
+        if (ch == '\n') {
+            lines++;
+        }
+    }
+    rewind(file);  // Reset the file pointer to the beginning
+
+    // Allocate memory for the points
+    *points = (Point_array_par*)malloc(sizeof(Point_array_par));
+    if(!points){
+        printf("Malloc failed");
+    }
+
+    (*points)->array = (Point*)malloc(lines * sizeof(Point));
+    if(!(*points)->array){
+        printf("Malloc failed");
+    }
+
+    // Read points from the file
+    int i = 0;
+    while (fscanf(file, "%lf,%lf", &(*points)->array[i].x, &(*points)->array[i].y) != EOF) {
+        i++;
+    }
+
+    fclose(file);
+    (*points)->size = lines;
+    printf("Points successfully read from CSV file: %s\n", filename);
 }

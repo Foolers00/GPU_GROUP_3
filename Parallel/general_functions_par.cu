@@ -14,8 +14,71 @@
 #endif
 
 
+Hull_par* new_quickhull_par(Point_array_par* points){
+
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    Line* l_pq; //device pointer
+    Hull_par* hull_up = NULL;
+    Hull_par* hull_down = NULL;
+    Hull_par* hull_result_gpu = NULL;
+    Hull_par* hull_result_cpu = NULL;
+
+    // above below array var
+    Point_array_par* points_above;
+    Point_array_par* points_below;
+
+
+    // set memory
+    points_above = init_point_array_par_gpu(points->size);
+    points_below = init_point_array_par_gpu(points->size);
+    CHECK(cudaMemcpy(points_above->array, points->array, points->size*sizeof(Point), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(points_below->array, points->array, points->size*sizeof(Point), cudaMemcpyHostToDevice));
+
+
+    // find points on hull
+    points_on_hull_par(points, &l_pq);
+    //l_pq = (Line) { .p = p, .q = q };
+
+    Line l_pq_cpu;
+    CHECK(cudaMemcpy(&l_pq_cpu, l_pq, sizeof(Line), cudaMemcpyDeviceToHost));
+
+
+    // splits array into above and below
+    //split_point_array(points, points_above, points_below, l_pq);
+    
+
+    // recursive call
+    hull_up = quickhull_split_par(points_above, l_pq, ABOVE);
+    hull_down = quickhull_split_par(points_below, l_pq, BELOW);
+
+    // combine
+    hull_result_gpu = combine_hull_par(hull_up, hull_down);
+
+    // copy back results
+    hull_result_cpu = init_hull_par(hull_result_gpu->size);
+    CHECK(cudaMemcpy(hull_result_cpu->array, hull_result_gpu->array, hull_result_gpu->size*sizeof(Line), cudaMemcpyDeviceToHost));
+    
+    // free memory
+    free_hull_par_gpu(hull_result_gpu);
+    free_point_array_par_gpu(points_above);
+    free_point_array_par_gpu(points_below);
+
+    // reset device
+    CHECK(cudaDeviceReset());
+
+    return hull_result_cpu;
+
+}
+
+
 Hull_par* quickhull_par(Point_array_par* points){
-  
+
     // device var
     int dev;
 
@@ -42,9 +105,9 @@ Hull_par* quickhull_par(Point_array_par* points){
     points_on_hull_par(points, &l_pq);
     //l_pq = (Line) { .p = p, .q = q };
 
-
     // splits array into above and below
     split_point_array(points, points_above, points_below, l_pq);
+    
 
     // recursive call
     hull_up = first_quickhull_split_par(points_above, l_pq, ABOVE);
@@ -59,16 +122,18 @@ Hull_par* quickhull_par(Point_array_par* points){
     
     // free memory
     free_hull_par_gpu(hull_result_gpu);
+    free_point_array_par_gpu(points_above);
+    free_point_array_par_gpu(points_below);
 
     // reset device
     CHECK(cudaDeviceReset());
-
 
     return hull_result_cpu;
 
 }
 
 Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side){
+
 
     // vars
     Point_array_par* points_side = NULL;
@@ -80,7 +145,7 @@ Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side){
     points_side = points;
 
     // find point with max distance
-    max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer, l is a device pointer
+    max_distance_cuda(l, points_side, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer, l is a device pointer
     // l_p_max = (Line) { .p = l.p, .q = max_point };
     // l_max_q = (Line) { .p = max_point, .q = l.q };
 
@@ -102,6 +167,7 @@ Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side){
                 quickhull_split_par(points_side, l_max_q, side)
         );
     }
+
 
     return hull_side;
 
@@ -121,13 +187,11 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
 
     // split array
     split_point_array_side(points, points_side, l, side);
-    free_point_array_par_gpu(points);
 
     // find point with max distance
-    max_distance_cuda(l, points, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
+    max_distance_cuda(l, points_side, &l_p_max, &l_max_q); // returns l_p_max and l_max_q gpu mem pointer
     // l_p_max = (Line) { .p = l.p, .q = max_point };
     // l_max_q = (Line) { .p = max_point, .q = l.q };
-
 
     if(points_side->size == 0) {
         hull_side = init_hull_par_gpu(1);
@@ -138,7 +202,6 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
         CHECK(cudaMemcpy(hull_side->array , l_p_max, sizeof(Line), cudaMemcpyDeviceToDevice));
         CHECK(cudaMemcpy(hull_side->array+1 , l_max_q, sizeof(Line), cudaMemcpyDeviceToDevice));
         hull_side->size = 2;
-
     }else {
         //points_side->curr_size > 1
         hull_side = combine_hull_par(
@@ -146,6 +209,8 @@ Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side){
                 quickhull_split_par(points_side, l_max_q, side)
         );
     }
+
+    free_point_array_par_gpu(points_side);
 
     return hull_side;
 

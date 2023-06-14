@@ -47,7 +47,7 @@ void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, 
     array_fsize and bytes array_fbytes, array_workload states the workload of every block, mode: INCLUSIVE/EXCLUSIVE
 */
 void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
-                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode);
+                            size_t array_grid_size, size_t array_rem_grid_size, size_t array_loop_cnt, int mode);
 
 void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
                             int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode);

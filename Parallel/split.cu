@@ -74,11 +74,11 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
     // move values
     for(int i = 0; i < array_loop_cnt; i++){
         movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_above, points_gpu, above_bits, 
-                                                above_index, array_fsize, i);
+                                                above_index, array_fsize, points->size, i);
     }
     if(array_rem_grid_size > 0){
         movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_above, points_gpu, above_bits, 
-                                                above_index, array_fsize, array_loop_cnt);
+                                                above_index, array_fsize, points->size, array_loop_cnt);
     }
     // copy size and values back
     points_above->array = temp_above;
@@ -89,16 +89,15 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
     // move values
     for(int i = 0; i < array_loop_cnt; i++){
         movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_below, points_gpu, below_bits, 
-                                                below_index, array_fsize, i);
+                                                below_index, array_fsize,  points->size, i);
     }
     if(array_rem_grid_size > 0){
          movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_below, points_gpu, below_bits, 
-                                                below_index, array_fsize, array_loop_cnt);       
+                                                below_index, array_fsize, points->size, array_loop_cnt);       
     }
     // copy size and values back
     points_below->array = temp_below;
     CHECK(cudaMemcpy(&points_below->size, below_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost));
-
 
 
     // free memory
@@ -121,6 +120,7 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     size_t array_loop_cnt;
     size_t array_fsize;
     size_t array_fbytes;
+    size_t point_bytes;
     size_t point_fbytes;
 
     // memory var
@@ -133,10 +133,15 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     workload_calc(&array_grid_size, &array_rem_grid_size, &array_loop_cnt, &array_fsize, points->size);
     point_fbytes = array_fsize*sizeof(Point);
     array_fbytes = array_fsize*sizeof(size_t);
+    point_bytes = points->size*sizeof(Point);
 
     // set up memory
-    CHECK(cudaMalloc((size_t **)&side_bits, array_fbytes+sizeof(size_t)));
+    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes));
+    CHECK(cudaMalloc((size_t **)&side_bits, array_fbytes));
     CHECK(cudaMalloc((size_t **)&side_index, array_fbytes+sizeof(size_t)));
+    
+    CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyDeviceToDevice));
+
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
     for(int i = 0; i < array_loop_cnt; i++){
@@ -145,7 +150,9 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     if(array_rem_grid_size > 0){
         setbits_side<<<array_grid_size, BLOCKSIZE>>>(side_bits, points_gpu, l, points->size, side, array_loop_cnt);
     }
-    
+
+    // CHECK( cudaPeekAtLastError() );
+    //         CHECK( cudaDeviceSynchronize() );
 
     // prefix bits to get indexes
     master_prescan_gpu(side_index, side_bits, array_fsize, array_fbytes, 
@@ -155,22 +162,25 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     // set up memory for output point arrays
     CHECK(cudaMalloc((Point **)&temp_side, point_fbytes));
 
+    //cpu_side_index = (size_t*)malloc(array_fbytes);
 
     // move values
     for(int i = 0; i < array_loop_cnt; i++){
     movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_side, points_gpu, side_bits, 
-                                                side_index, array_fsize, i);
+                                                side_index, array_fsize, points->size, i);
     }
     if(array_rem_grid_size > 0){
         movevalues<<<array_grid_size, BLOCKSIZE>>>(temp_side, points_gpu, side_bits, 
-                                                side_index, array_fsize, array_loop_cnt);
+                                                side_index, array_fsize, points->size, array_loop_cnt);
     }
+
+    CHECK( cudaPeekAtLastError() );
+            CHECK( cudaDeviceSynchronize() );
 
     points_side->array = temp_side;
     CHECK(cudaMemcpy(&points_side->size, side_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
     // free memory
-    CHECK(cudaFree(points_gpu));
     CHECK(cudaFree(side_bits));
     CHECK(cudaFree(side_index));
 
@@ -268,7 +278,7 @@ __global__ void setbits_side(size_t *bits, Point* points, Line* l,
         }
     }
     else{
-        bits[index_1] = 0;
+        bits[index_2] = 0;
     }
         
     
@@ -279,31 +289,32 @@ __global__ void setbits_side(size_t *bits, Point* points, Line* l,
 
 
 __global__ void movevalues(Point* o_data, Point* i_data, size_t* bit_data,
-                           size_t* index_data, size_t array_fsize, int block_offset)
+                           size_t* index_data, size_t array_fsize, size_t array_size, int block_offset)
 {
 
     int thid = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if(thid == 0){
-        index_data[array_fsize] = bit_data[array_fsize-1]+index_data[array_fsize-1];
-    }
-
 
         
     int index_1 = 2 * thid + block_offset*MAX_BLOCK_COUNT_SHIFT;
     int index_2 = index_1 + 1;
 
-    if (bit_data[index_1] == 1)
-    {
-        o_data[index_data[index_1]] = i_data[index_1];
+    if(index_1 == 0){
+        index_data[array_fsize] = bit_data[array_size-1]+index_data[array_size-1];
     }
 
-    if (bit_data[index_2] == 1)
-    {
-        o_data[index_data[index_2]] = i_data[index_2];
+    if(index_1 < array_size){
+        if (bit_data[index_1] == 1)
+        {
+            o_data[index_data[index_1]] = i_data[index_1];
+        }
     }
-
-    
+    if(index_2 < array_size){
+        if (bit_data[index_2] == 1)
+        {
+            o_data[index_data[index_2]] = i_data[index_2];
+        }
+    }
+  
 
 }
 

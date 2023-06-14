@@ -57,6 +57,11 @@ __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max
 }
 
 void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q){
+    
+    if(points->size == 0){
+        return;
+    }
+
     int size = points->size;
     int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
@@ -67,7 +72,8 @@ void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** 
 
     Point* d_points_in;
     CHECK(cudaMalloc((void**)&d_points_in, size * sizeof(Point)));
-    CHECK(cudaMemcpy(d_points_in, points->array, size*sizeof(Point), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_points_in, points->array, size*sizeof(Point), cudaMemcpyDeviceToDevice));
+    //d_points_in = points->array;
 
     Point* d_points_out;
     CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
