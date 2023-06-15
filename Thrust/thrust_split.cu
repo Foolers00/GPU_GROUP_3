@@ -30,18 +30,22 @@ struct check_point_location_functor
 
 
 void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_above, 
-                                thrust::device_vector<Point>&  points_below, Line l){
+                                thrust::device_vector<Point>&  points_below, thrust::device_vector<Line>& l){
 
         // copy to gpu
         //thrust::device_vector<Point> points_gpu = points;
 
+
         // resize space
         points_above.resize(points.size());
-        points_below.resize(points.size());;
+        points_below.resize(points.size());
+
+
+        thrust::make_zip_iterator(thrust::make_tuple(points.begin(), l.begin()), thrust::make_tuple(points.begin(), l.begin()));
 
         // move values
-        auto points_above_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_above.begin(), check_point_location_functor(l, ABOVE));
-        auto points_below_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_below.begin(), check_point_location_functor(l, BELOW));
+        auto points_above_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_above.begin(), check_point_location_functor(l[0], ABOVE));
+        auto points_below_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_below.begin(), check_point_location_functor(l[0], BELOW));
 
         // set size
         points_above.resize(points_above_end-points_above.begin());
@@ -51,13 +55,13 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
 
 
 void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_side, 
-                                    Line l, int side){
+                                    thrust::device_vector<Line>& l, int side){
 
         // resize space
         points_side.resize(points.size());
 
         // move values
-        auto points_side_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_side.begin(), check_point_location_functor(l, side));
+        auto points_side_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_side.begin(), check_point_location_functor(l[0], side));
 
         // set size
         points_side.resize(points_side_end-points_side.begin());

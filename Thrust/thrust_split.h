@@ -25,10 +25,10 @@
 #endif
 
 void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_above, 
-                              thrust::device_vector<Point>&  points_below, Line l);
+                              thrust::device_vector<Point>&  points_below, thrust::device_vector<Line>& l);
 
 void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_side, 
-                                   Line l, int side);
+                                   thrust::device_vector<Line>& l, int side);
 
 __device__ void check_point_location_thrust(Line* l, Point z, int* result);
 
