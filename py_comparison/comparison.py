@@ -1,8 +1,12 @@
 import csv
 import turtle as turtle
+import tkinter as tkinter
 
-canvwidth=1500
-canvheight=1500
+
+
+
+canvwidth=10000
+canvheight=10000
 
 
 def reset_pos():
@@ -16,7 +20,7 @@ def move_turtle(p):
 
 
 def transform_coord(p):
-    return Point(p.x-(canvwidth/2), p.y-(canvheight/2)+100)
+    return Point(p.x-(canvwidth/2)+100, p.y-(canvheight/2)+100)
 
 def draw_point(p):
     move_turtle(p)
@@ -73,8 +77,8 @@ turtle.screensize(canvwidth, canvheight, bg="white")
 
 
 # Example usage
-filename = 'points.csv'  # Replace with the path to your CSV file
-points = read_csv_points(filename)
+# filename = 'points.csv'  # Replace with the path to your CSV file
+# points = read_csv_points(filename)
 
 
 filename = 'cpu_hull.csv'  # Replace with the path to your CSV file
@@ -103,4 +107,10 @@ for line in lines_gpu:
     print(f"Line segment: ({p1.x}, {p1.y}) to ({p2.x}, {p2.y})")
 
 turtle.update()
+
+ts = turtle.getscreen()
+ts.getcanvas().postscript(file="duck.eps")
+
 turtle.done()
+
+

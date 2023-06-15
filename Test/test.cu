@@ -541,18 +541,7 @@ void test_split(){
     l_bound = 0;
     u_bound = 100000000;
 
-    //points_cpu = generate_random_points(size, l_bound, u_bound);
-    points_cpu = init_point_array(size);
-    points_cpu->curr_size = 7;
-    points_cpu->array[0] = (Point) { .x = 575.000000, .y = 173.000000};
-    points_cpu->array[1] = (Point) { .x = 107.000000, .y = 780.000000};
-    points_cpu->array[2] = (Point) { .x = 309.000000, .y = 449.000000};
-    points_cpu->array[3] = (Point) { .x = 774.000000, .y = 230.000000};
-    points_cpu->array[4] = (Point) { .x = 490.000000, .y = 468.000000};
-    points_cpu->array[5] = (Point) { .x = 140.000000, .y = 332.000000};
-    points_cpu->array[6] = (Point) { .x = 80.000000, .y = 713.000000};
-
-
+    points_cpu = generate_random_points(size, l_bound, u_bound);
     points_gpu = init_point_array_par(size);
     points_thrust.resize(size);
 
@@ -1054,14 +1043,16 @@ void test_quickhull_2(){
 
 
     // set vars
-    size = 100000000;
-    l_bound = -1000000;
-    u_bound = 1000000;
+    size = 10000000;
+    l_bound = -10000000;
+    u_bound = 10000000;
+
+    while(state){
 
     points_cpu = init_point_array(2*size);
     points_gpu = generate_random_points_par(size, l_bound, u_bound);
 
-    //readPointsFromCSV("points", &points_gpu);
+    //readPointsFromCSV("points_mistake_1", &points_gpu);
 
 
     memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
@@ -1096,6 +1087,10 @@ void test_quickhull_2(){
             else{
                 if(hull_cpu->array[i].p.x == hull_cpu->array[i].q.x && hull_gpu->array[j].p.x == hull_gpu->array[j].q.x &&
                     hull_cpu->array[i].p.x == hull_gpu->array[j].p.x){
+                    state_2 = true;
+                }
+                if(hull_cpu->array[i].p.y == hull_cpu->array[i].q.y && hull_gpu->array[j].p.y == hull_gpu->array[j].q.y &&
+                    hull_cpu->array[i].p.y == hull_gpu->array[j].p.y){
                     state_2 = true;
                 }
             }
@@ -1146,6 +1141,8 @@ void test_quickhull_2(){
     free_point_array_par(points_gpu);
     free_hull(hull_cpu);
     free_hull_par(hull_gpu);
+
+    }
 
     // reset device
     CHECK(cudaDeviceReset());

@@ -26,41 +26,38 @@ Hull* quickhull(Point_array* points){
 
 }
 
-// Hull* quickhull(Point_array* points){
+Hull* new_quickhull(Point_array* points){
 
-//     Point p;
-//     Point q;
-//     Line l_pq;
-//     Hull* hull_up = NULL;
-//     Hull* hull_down = NULL;
-//     Point_array* points_above;
-//     Point_array* points_below;
+    Point p;
+    Point q;
+    Line l_pq;
+    Hull* hull_up = NULL;
+    Hull* hull_down = NULL;
+    Point_array* points_above;
+    Point_array* points_below;
 
-//     points_on_hull(points, &p, &q);
-//     l_pq = (Line) { .p = p, .q = q };
+    points_on_hull(points, &p, &q);
+    l_pq = (Line) { .p = p, .q = q };
 
-//     points_above = init_point_array(points->max_size/2);
-//     points_below = init_point_array(points->max_size/2);
+    points_above = init_point_array(points->max_size/2);
+    points_below = init_point_array(points->max_size/2);
 
-//     for(int i = 0; i < points->curr_size; i++){
-//         int result = check_point_location(l_pq, points->array[i]);
-//         if(result == ON){
-//             continue;
-//         }
-//         else if(result == ABOVE){
-//             add_to_point_array(points_above, points->array[i]);
-//         }
-//         else{
-//             add_to_point_array(points_below, points->array[i]);
-//         }
-//     }
+    for(int i = 0; i < points->curr_size; i++){
+        int result = check_point_location(l_pq, points->array[i]);
+        if(result == ABOVE){
+            add_to_point_array(points_above, points->array[i]);
+        }
+        else if(result == BELOW){
+            add_to_point_array(points_below, points->array[i]);
+        }
+    }
 
-//     hull_up = first_quickhull_split(points, l_pq, ABOVE);
-//     hull_down = first_quickhull_split(points, l_pq, BELOW);
+    hull_up = first_quickhull_split(points, l_pq, ABOVE);
+    hull_down = first_quickhull_split(points, l_pq, BELOW);
 
-//     return combine_hull(hull_up, hull_down);
+    return combine_hull(hull_up, hull_down);
 
-// }
+}
 
 Hull* first_quickhull_split(Point_array* points, Line l, int side){
     
@@ -73,16 +70,19 @@ Hull* first_quickhull_split(Point_array* points, Line l, int side){
 
     points_side = points;
 
-    
+    if(points_side->curr_size == 0) {
+        hull_side = init_hull(2);
+        add_to_hull(hull_side, l);
+        return hull_side;
+    }
 
     max_point = max_distance(l, points_side);
     l_p_max = (Line) { .p = l.p, .q = max_point };
     l_max_q = (Line) { .p = max_point, .q = l.q };
 
-    if(points_side->curr_size == 0) {
-        hull_side = init_hull(2);
-        add_to_hull(hull_side, l);
-    }else if(points_side->curr_size == 1){
+    
+
+    if(points_side->curr_size == 1){
         hull_side = init_hull(4);
         add_to_hull(hull_side, l_p_max);
         add_to_hull(hull_side, l_max_q);
@@ -110,10 +110,8 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
     points_side = init_point_array(points->max_size/2);
 
     for(int i = 0; i < points->curr_size; i++){
+        
         int result = check_point_location(l, points->array[i]);
-        // if(result == ON || result != side){
-        //     continue;
-        // }
 
         if(side == result){
             add_to_point_array(points_side, points->array[i]);

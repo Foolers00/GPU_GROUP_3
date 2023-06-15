@@ -52,6 +52,7 @@
     calculates the hull for the poitns in Point_array
 */
 Hull* quickhull(Point_array* points);
+Hull* new_quickhull(Point_array* points);
 
 /*
     calculates hull for all points in Point_array that are above/below
