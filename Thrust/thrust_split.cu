@@ -11,16 +11,16 @@
 
 struct check_point_location_functor
 {
-    Line l;
+    thrust::device_vector<Line>& l;
     int side;
    
-    check_point_location_functor(Line _l, int _side) : l(_l), side(_side) { }
+    check_point_location_functor(thrust::device_vector<Line>&_l, int _side) : l(_l), side(_side) { }
 
     __device__
         bool operator()(const Point& point){
             
             int result;
-            check_point_location_thrust(&l, point, &result);
+            check_point_location_thrust(l[0], point, &result);
             return (result == side);
                 
         }
@@ -44,8 +44,8 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
         thrust::make_zip_iterator(thrust::make_tuple(points.begin(), l.begin()), thrust::make_tuple(points.begin(), l.begin()));
 
         // move values
-        auto points_above_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_above.begin(), check_point_location_functor(l[0], ABOVE));
-        auto points_below_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_below.begin(), check_point_location_functor(l[0], BELOW));
+        auto points_above_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_above.begin(), check_point_location_functor(l, ABOVE));
+        auto points_below_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_below.begin(), check_point_location_functor(l, BELOW));
 
         // set size
         points_above.resize(points_above_end-points_above.begin());
@@ -61,7 +61,7 @@ void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust:
         points_side.resize(points.size());
 
         // move values
-        auto points_side_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_side.begin(), check_point_location_functor(l[0], side));
+        auto points_side_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_side.begin(), check_point_location_functor(l, side));
 
         // set size
         points_side.resize(points_side_end-points_side.begin());
@@ -70,15 +70,15 @@ void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust:
 
 
 
-__device__ void check_point_location_thrust(Line* l, Point z, int* result){
+__device__ void check_point_location_thrust(Line l, Point z, int* result){
 
     Vector v1;
     Vector v2; 
     
     double cross_result;
 
-    init_vector_thrust(l->p, l->q, &v1);
-    init_vector_thrust(l->p, z, &v2);
+    init_vector_thrust(l.p, l.q, &v1);
+    init_vector_thrust(l.p, z, &v2);
     
     cross_product_thrust(v1, v2, &cross_result);
 
