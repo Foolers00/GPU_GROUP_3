@@ -30,7 +30,7 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
 void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_side, 
                                    thrust::device_vector<Line>& l, int side);
 
-__device__ void check_point_location_thrust(Line* l, Point z, int* result);
+__device__ void check_point_location_thrust(Line l, Point z, int* result);
 
 __device__ Vector init_vector_thrust(Point p, Point q, Vector* v);
 

@@ -522,6 +522,7 @@ void test_split(){
     thrust::device_vector<Point> points_thrust; 
     thrust::device_vector<Point> points_above_thrust; 
     thrust::device_vector<Point> points_below_thrust;
+    thrust::device_vector<Line> l_pq_thrust;
     std::vector<Point> points_temp_above_thrust; 
     std::vector<Point> points_temp_below_thrust;
 
@@ -535,9 +536,7 @@ void test_split(){
     bool state = true;
 
     // set up array
-    //size = 10000;
-    size = 7;
-
+    size = 1000000;
     l_bound = 0;
     u_bound = 100000000;
 
@@ -607,9 +606,12 @@ void test_split(){
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
+
+    // THRUST Version
     tic = clock();
 
-    thrust_split_point_array(points_thrust, points_above_thrust, points_below_thrust, l_pq);
+    l_pq_thrust.insert(l_pq_thrust.end(), l_pq);
+    thrust_split_point_array(points_thrust, points_above_thrust, points_below_thrust, l_pq_thrust);
 
     toc = clock();
     thrust_time = (double)(toc - tic)/CLOCKS_PER_SEC;
