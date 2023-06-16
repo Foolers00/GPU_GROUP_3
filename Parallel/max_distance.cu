@@ -100,6 +100,7 @@ void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** 
     CHECK(cudaMemcpy(&(*l_max_q)->p, d_max, sizeof(Point), cudaMemcpyDeviceToDevice));
     CHECK(cudaMemcpy(&(*l_max_q)->q, &l->q, sizeof(Point), cudaMemcpyDeviceToDevice));
 
+    CHECK(cudaFree(d_max));
     CHECK(cudaFree(d_points_in));
     CHECK(cudaFree(d_points_out));
 }

@@ -181,6 +181,7 @@ void split_point_array_side(Point_array_par* points, Point_array_par* points_sid
     CHECK(cudaMemcpy(&points_side->size, side_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
     // free memory
+    CHECK(cudaFree(points_gpu));
     CHECK(cudaFree(side_bits));
     CHECK(cudaFree(side_index));
 

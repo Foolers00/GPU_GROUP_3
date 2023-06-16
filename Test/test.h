@@ -130,7 +130,6 @@ void test_combinehull();
     tests parallel quickhull
 */
 void test_quickhull();
-void test_quickhull_2();
 
 
 void printData(size_t *data, const size_t size);

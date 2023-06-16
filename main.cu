@@ -29,7 +29,7 @@ int main(){
 
     //test_combinehull();
 
-    test_quickhull_2();
+    test_quickhull();
 
     return 0;
 }

@@ -15,8 +15,8 @@
 #endif
 
 #define MAX_BLOCK_COUNT 2147483647
-//#define MAX_BLOCK_COUNT 65535
 #define BLOCKSIZE 512
+
 #define MAX_BLOCK_COUNT_SHIFT MAX_BLOCK_COUNT*2*BLOCKSIZE
 #define INCLUSIVE 1
 #define EXCLUSIVE 0
@@ -80,3 +80,5 @@ Hull_par* init_hull_par_gpu(size_t size);
 void free_hull_par(Hull_par* hull);
 
 void free_hull_par_gpu(Hull_par* hull);
+
+void free_line_par_gpu(Line* l);

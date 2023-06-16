@@ -226,3 +226,11 @@ void free_hull_par_gpu(Hull_par* hull){
     CHECK(cudaFreeHost(hull));
     #endif
 }
+
+
+
+void free_line_par_gpu(Line* l){
+    if(l){
+        CHECK(cudaFree(l));
+    }
+}

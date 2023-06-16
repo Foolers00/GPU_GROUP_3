@@ -558,6 +558,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
     CHECK(cudaFree(aux_2_data));
     CHECK(cudaFree(aux_3_data));
     CHECK(cudaFree(aux_4_data));
+    CHECK(cudaFree(aux_5_data));
 
 
 }
