@@ -16,7 +16,7 @@ struct distance_functor
     distance_functor(Line* _l) : l(_l) {}
 
     __device__
-    float operator()(const Point& lhs, const Point& rhs) {
+    bool operator()(const Point& lhs, const Point& rhs) {
         double res_lhs, res_rhs;
         dist(l, lhs, res_lhs);
         dist(l, rhs, res_rhs);
