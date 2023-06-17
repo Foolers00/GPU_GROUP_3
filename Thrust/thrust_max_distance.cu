@@ -3,10 +3,11 @@
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef THRUST_SPLIT
-#define THRUST_SPLIT
+#ifndef THRUST_MAX_DISTANCE
+#define THRUST_MAX_DISTANCE
 #include "thrust_max_distance.h"
 #endif
+
 
 struct distance_functor
 {

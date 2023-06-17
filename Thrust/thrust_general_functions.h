@@ -38,8 +38,8 @@
 #endif
 
 
-#ifndef THRUST_MAX_DISTANCE
-#define THRUST_MAX_DISTANCE
+#ifndef THRUST_MINMAX
+#define THRUST_MINMAX
 #include "thrust_minmax.h"
 #endif
 
