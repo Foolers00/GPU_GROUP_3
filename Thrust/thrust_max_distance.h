@@ -24,4 +24,5 @@
 #include <thrust/execution_policy.h>
 #endif
 
-void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<Point>& points, thrust::device_vector<Linr>& l_max);
+__device__ void dist(Line* l, const Point& z, double& res);
+void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<Point>& points, thrust::device_vector<Line>& l_max);
