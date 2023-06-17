@@ -32,6 +32,18 @@
 #include "thrust_split.h"
 #endif
 
+#ifndef THRUST_MAX_DISTANCE
+#define THRUST_MAX_DISTANCE
+#include "thrust_max_distance.h"
+#endif
+
+
+#ifndef THRUST_MAX_DISTANCE
+#define THRUST_MAX_DISTANCE
+#include "thrust_minmax.h"
+#endif
+
+
 
 
 void thrust_quickhull(Point_array_par* points, thrust::host_vector<Line>& hull);

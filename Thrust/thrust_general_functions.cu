@@ -59,6 +59,7 @@ void thrust_first_quickhull_split(thrust::device_vector<Point>& points, thrust::
 
 
     // find point with max distance
+    thrust_max_distance(l, points_side, l_max);
     ////////////////////////////////
 
 
