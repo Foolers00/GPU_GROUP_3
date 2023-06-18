@@ -929,12 +929,10 @@ void test_quickhull(){
 
 
     // set vars
-    size = 100000000;
+    size = 10000;
     l_bound = -10000000;
     u_bound = 10000000;
 
-    //while(state){
-    
     
     points_cpu = init_point_array(2*size);
     points_gpu = generate_random_points_par(size, l_bound, u_bound);
@@ -959,8 +957,8 @@ void test_quickhull(){
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
-
     //writeHullparArrayToCSV(hull_gpu);
+
 
     bool state_2 = false;
 
@@ -1029,6 +1027,7 @@ void test_quickhull(){
     free_hull(hull_cpu);
     free_hull_par(hull_gpu);
 
+
     //}
 
     // reset device
@@ -1036,125 +1035,9 @@ void test_quickhull(){
 }
 
 
-void writePointArrayToCSV(Point_array* points){
-    FILE *file = fopen("points", "w");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", "points");
-        return;
-    }
-
-    for (int i = 0; i < points->curr_size; i++) {
-        fprintf(file, "%f,%f\n", points->array[i].x,points->array[i].y);
-    }
-
-    fclose(file);
-    printf("Array successfully written to CSV file: %s\n", "points");
-}
-
-
-void writeHullArrayToCSV(Hull* hull) {
-    FILE *file = fopen("cpu_hull", "w");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", "cpu_hull");
-        return;
-    }
-
-    for (int i = 0; i < hull->curr_size; i++) {
-        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
-    }
-
-    fclose(file);
-    printf("Array successfully written to CSV file: %s\n", "cpu_hull");
-}
-
-
-void writeHullparArrayToCSV(Hull_par* hull) {
-    FILE *file = fopen("gpu_hull", "w");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", "gpu_hull");
-        return;
-    }
-
-    for (int i = 0; i < hull->size; i++) {
-        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
-    }
-
-    fclose(file);
-    printf("Array successfully written to CSV file: %s\n", "gpu_hull");
-}
 
 
 
-Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
-
-    time_t t;
-    double difference = u_bound - l_bound;
-    double offset_x_1 = 0;
-    double offset_y_1 = 0;
-    double offset_x_2 = 0;
-    double offset_y_2 = 0;
-    Point point_1;
-    Point point_2;
-    Line l;
-    srand((unsigned) time(&t));
-
-    Hull* hull = init_hull(num_of_lines * 2);
-    for(size_t i = 0; i < num_of_lines; i++){
-        offset_x_1 = rand() % (int)difference;
-        offset_y_1 = rand() % (int)difference;
-        offset_x_2 = rand() % (int)difference;
-        offset_y_2 = rand() % (int)difference;
-        point_1 = (Point) {.x = l_bound + offset_x_1, .y = l_bound + offset_y_1};
-        point_2 = (Point) {.x = l_bound + offset_x_2, .y = l_bound + offset_y_2};
-        l = init_line(point_1, point_2);
-        add_to_hull(hull, l);
-    }
-
-    return hull;
-}
-
-
-
-
-
-void readPointsFromCSV(const char* filename, Point_array_par** points) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Error opening file: %s\n", filename);
-    }
-
-    // Count the number of lines in the file
-    int lines = 0;
-    char ch;
-    while (!feof(file)) {
-        ch = fgetc(file);
-        if (ch == '\n') {
-            lines++;
-        }
-    }
-    rewind(file);  // Reset the file pointer to the beginning
-
-    // Allocate memory for the points
-    *points = (Point_array_par*)malloc(sizeof(Point_array_par));
-    if(!points){
-        printf("Malloc failed");
-    }
-
-    (*points)->array = (Point*)malloc(lines * sizeof(Point));
-    if(!(*points)->array){
-        printf("Malloc failed");
-    }
-
-    // Read points from the file
-    int i = 0;
-    while (fscanf(file, "%lf,%lf", &(*points)->array[i].x, &(*points)->array[i].y) != EOF) {
-        i++;
-    }
-
-    fclose(file);
-    (*points)->size = lines;
-    printf("Points successfully read from CSV file: %s\n", filename);
-}
 
 
 void test_thrust_quickhull(){
@@ -1194,13 +1077,10 @@ void test_thrust_quickhull(){
     l_bound = 0;
     u_bound = 1000;
 
-    //while(state){
-
-
     points_cpu = init_point_array(2*size);
     points_gpu = generate_random_points_par(size, l_bound, u_bound);
 
-    //readPointsFromCSV("points_mistake_1", &points_gpu);
+    //readPointsFromCSV("points", &points_gpu);
 
 
     memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
@@ -1225,7 +1105,6 @@ void test_thrust_quickhull(){
     for (int i = 0; i < hull_gpu_vec.size(); i++){
         hull_gpu->array[i] = hull_gpu_vec[i];
     }
-
 
     //writeHullparArrayToCSV(hull_gpu);
 
@@ -1300,4 +1179,229 @@ void test_thrust_quickhull(){
 
     // reset device
     CHECK(cudaDeviceReset());
+}
+
+
+
+
+void test_quickhull_performance(){
+
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // clock
+    clock_t tic;
+    clock_t toc;
+    double cpu_time;
+    double gpu_time;
+    double thrust_gpu_time;
+    double cpu_time_avg;
+    double gpu_time_avg;
+    double thrust_gpu_time_avg;
+    int iterations;
+
+    // vars
+    size_t size;
+    double l_bound;
+    double u_bound;
+
+    // cpu
+    Point_array* points_cpu;
+    Hull* hull_cpu;
+
+    // gpu / thrust
+    Point_array_par* points_gpu;
+    Hull_par* hull_gpu;
+
+
+    // set vars
+    size = 10000000;
+    l_bound = 0;
+    u_bound = 1000;
+
+    cpu_time_avg = 0;
+    gpu_time_avg = 0;
+    thrust_gpu_time_avg = 0;
+    iterations = 0;
+
+    while(iterations < 100){
+
+        points_cpu = init_point_array(2*size);
+        points_gpu = generate_random_points_par(size, l_bound, u_bound);
+
+
+        memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+        points_cpu->curr_size = size;
+
+        // cpu
+        tic = clock();
+        hull_cpu = quickhull(points_cpu);
+        toc = clock();
+        cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        // gpu
+        tic = clock();
+        hull_gpu = quickhull_par(points_gpu);
+        toc = clock();
+        gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        // thrust
+        thrust::host_vector<Line> hull_gpu_vec;
+        tic = clock();
+        thrust_quickhull(points_gpu, hull_gpu_vec);
+        toc = clock();
+        thrust_gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+
+        // free memory
+        free_point_array(points_cpu);
+        free_point_array_par(points_gpu);
+        free_hull(hull_cpu);
+        free_hull_par(hull_gpu);
+
+        cpu_time_avg += cpu_time;
+        gpu_time_avg += gpu_time;
+        thrust_gpu_time_avg += thrust_gpu_time;
+        iterations++;
+
+    }
+
+    cpu_time_avg/=iterations;
+    gpu_time_avg/=iterations;
+    thrust_gpu_time_avg/=iterations;
+    
+    printf("CPU time: %f, GPU time: %f, GPU Thrust time: %f\n", cpu_time_avg, 
+    gpu_time_avg, thrust_gpu_time_avg);
+
+    // reset device
+    CHECK(cudaDeviceReset());
+}
+
+
+
+
+
+void writePointArrayToCSV(Point_array* points){
+    FILE *file = fopen("points", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "points");
+        return;
+    }
+
+    for (int i = 0; i < points->curr_size; i++) {
+        fprintf(file, "%f,%f\n", points->array[i].x,points->array[i].y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "points");
+}
+
+
+void writeHullArrayToCSV(Hull* hull) {
+    FILE *file = fopen("cpu_hull", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "cpu_hull");
+        return;
+    }
+
+    for (int i = 0; i < hull->curr_size; i++) {
+        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "cpu_hull");
+}
+
+
+void writeHullparArrayToCSV(Hull_par* hull) {
+    FILE *file = fopen("gpu_hull", "w");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", "gpu_hull");
+        return;
+    }
+
+    for (int i = 0; i < hull->size; i++) {
+        fprintf(file, "%f,%f,%f,%f\n", hull->array[i].p.x,hull->array[i].p.y,hull->array[i].q.x,hull->array[i].q.y);
+    }
+
+    fclose(file);
+    printf("Array successfully written to CSV file: %s\n", "gpu_hull");
+}
+
+
+
+
+
+void readPointsFromCSV(const char* filename, Point_array_par** points) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Error opening file: %s\n", filename);
+    }
+
+    // Count the number of lines in the file
+    int lines = 0;
+    char ch;
+    while (!feof(file)) {
+        ch = fgetc(file);
+        if (ch == '\n') {
+            lines++;
+        }
+    }
+    rewind(file);  // Reset the file pointer to the beginning
+
+    // Allocate memory for the points
+    *points = (Point_array_par*)malloc(sizeof(Point_array_par));
+    if(!points){
+        printf("Malloc failed");
+    }
+
+    (*points)->array = (Point*)malloc(lines * sizeof(Point));
+    if(!(*points)->array){
+        printf("Malloc failed");
+    }
+
+    // Read points from the file
+    int i = 0;
+    while (fscanf(file, "%lf,%lf", &(*points)->array[i].x, &(*points)->array[i].y) != EOF) {
+        i++;
+    }
+
+    fclose(file);
+    (*points)->size = lines;
+    printf("Points successfully read from CSV file: %s\n", filename);
+}
+
+
+
+
+Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
+
+    time_t t;
+    double difference = u_bound - l_bound;
+    double offset_x_1 = 0;
+    double offset_y_1 = 0;
+    double offset_x_2 = 0;
+    double offset_y_2 = 0;
+    Point point_1;
+    Point point_2;
+    Line l;
+    srand((unsigned) time(&t));
+
+    Hull* hull = init_hull(num_of_lines * 2);
+    for(size_t i = 0; i < num_of_lines; i++){
+        offset_x_1 = rand() % (int)difference;
+        offset_y_1 = rand() % (int)difference;
+        offset_x_2 = rand() % (int)difference;
+        offset_y_2 = rand() % (int)difference;
+        point_1 = (Point) {.x = l_bound + offset_x_1, .y = l_bound + offset_y_1};
+        point_2 = (Point) {.x = l_bound + offset_x_2, .y = l_bound + offset_y_2};
+        l = init_line(point_1, point_2);
+        add_to_hull(hull, l);
+    }
+
+    return hull;
 }

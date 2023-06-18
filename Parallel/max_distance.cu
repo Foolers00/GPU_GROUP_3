@@ -27,7 +27,7 @@ __device__ void distance_cuda(Line* l, Point* z, double* res){
 
 __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max){
 
-    __shared__ PointDist sdata[1024];
+    __shared__ PointDist sdata[BLOCKSIZE];
 
     int tid = threadIdx.x;
     int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -63,7 +63,7 @@ void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** 
     }
 
     int size = points->size;
-    int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
+    int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
 
 //    Line* d_l;

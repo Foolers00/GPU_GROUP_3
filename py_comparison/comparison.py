@@ -5,8 +5,8 @@ import tkinter as tkinter
 
 
 
-canvwidth=10000
-canvheight=10000
+canvwidth=1000
+canvheight=1000
 
 
 def reset_pos():
@@ -77,8 +77,8 @@ turtle.screensize(canvwidth, canvheight, bg="white")
 
 
 # Example usage
-# filename = 'points.csv'  # Replace with the path to your CSV file
-# points = read_csv_points(filename)
+filename = 'points.csv'  # Replace with the path to your CSV file
+points = read_csv_points(filename)
 
 
 filename = 'cpu_hull.csv'  # Replace with the path to your CSV file
@@ -88,9 +88,9 @@ filename = 'gpu_hull.csv'  # Replace with the path to your CSV file
 lines_gpu = read_csv_lines(filename)
 
 # Printing the stored lines
-# for p in points:
-#     draw_point(p)
-#     print(f"Point: ({p.x}, {p.y})")
+for p in points:
+    draw_point(p)
+    print(f"Point: ({p.x}, {p.y})")
 
 
 # Printing the stored lines cpu

@@ -18,6 +18,15 @@ struct compare_point
     }
 };
 
+
+__global__ void assign_max_lines(Line* l_ptr, Point* min_ptr, Point* max_ptr){
+    
+    if(threadIdx.x == 0){
+        l_ptr->p = *min_ptr;
+        l_ptr->q = *max_ptr;
+    }
+}
+
 void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<Line>& l){
     l.resize(1);
     thrust::device_vector<Point>::iterator iter_max = thrust::max_element(points.begin(), points.end(), compare_point());
@@ -30,6 +39,9 @@ void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<L
     cudaMemcpy(&(l_ptr->p), min_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
     cudaMemcpy(&(l_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
 }
+
+
+
 
 //int main(int argc, char** argv){
 //    int size = 100000000;

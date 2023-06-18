@@ -16,8 +16,8 @@
 __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
 
     // 1024 * 16 * 2 = 32,8 KB
-    __shared__ Point sdata_min[1024];
-    __shared__ Point sdata_max[1024];
+    __shared__ Point sdata_min[BLOCKSIZE];
+    __shared__ Point sdata_max[BLOCKSIZE];
 
     int tid = threadIdx.x;
     int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -53,7 +53,7 @@ __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
 
 void minmax_cuda(Point_array_par* points, Line** l_pq){
     int size = points->size;
-    int threadsPerBlock = 1024; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
+    int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
 
     minmaxPoint points_in;

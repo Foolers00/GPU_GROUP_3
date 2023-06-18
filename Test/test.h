@@ -136,16 +136,33 @@ void test_combinehull();
 */
 void test_quickhull();
 
+
 /*
     tests parallel quickhull using thrust library
 */
 void test_thrust_quickhull();
 
+
+/*
+    timing all implementations
+*/
+void test_quickhull_performance();
+
+
+/*
+    prints data
+*/
 void printData(size_t *data, const size_t size);
 
+/*
+    generates random lines
+*/
 Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound);
 
 
+/*
+    debugging writing data to files or reading from it
+*/
 void writePointArrayToCSV(Point_array* points);
 void writeHullArrayToCSV(Hull* hull);
 void writeHullparArrayToCSV(Hull_par* hull);

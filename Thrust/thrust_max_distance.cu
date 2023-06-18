@@ -33,6 +33,18 @@ __device__ void dist(Line* l, const Point& z, double& res){
 }
 
 
+__global__ void assign_max_lines(Line* l_ptr, Line* l_p_max_ptr, Line* l_max_q_ptr, Point* max_ptr){
+    
+    if(threadIdx.x == 0){
+        l_p_max_ptr->p = l_ptr->p;
+        l_p_max_ptr->q = *max_ptr;
+
+        l_max_q_ptr->p = *max_ptr;
+        l_max_q_ptr->q = l_ptr->q;
+    }
+}
+
+
 void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<Point>& points, thrust::device_vector<Line>& l_max){
     l_max.resize(2);
     Line* l_ptr = thrust::raw_pointer_cast(l.data());
@@ -41,12 +53,14 @@ void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<P
 
     Line* l_p_max_ptr = thrust::raw_pointer_cast(&(*l_max.begin())); //device pointer
     Line* l_max_q_ptr = thrust::raw_pointer_cast(&(*(l_max.begin() + 1))); //device pointer
-    cudaMemcpy(&(l_p_max_ptr->p), &(l_ptr->p), sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_p_max_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_max_q_ptr->p), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_max_q_ptr->q), &(l_ptr->q), sizeof(Point), cudaMemcpyDeviceToDevice);
+
+    assign_max_lines<<<1, 1>>>(l_ptr, l_p_max_ptr, l_max_q_ptr, max_ptr);
 
 }
+
+
+
+
 
 //int main(int argc, char** argv){
 //    int size = 100000000;
