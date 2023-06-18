@@ -36,6 +36,9 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
         //thrust::device_vector<Point> points_gpu = points;
         Line* l_pointer = thrust::raw_pointer_cast(l.data());
 
+        thrust::host_vector<Line> l_h = l;
+        Line* l_pointerh = thrust::raw_pointer_cast(l_h.data());
+        printf("L.p: (%f, %f), L.q: (%f, %f)\n", l_pointerh->p.x, l_pointerh->p.y, l_pointerh->q.x, l_pointerh->q.y);
 
         // resize space
         points_above.resize(points.size());
@@ -56,7 +59,7 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
 void thrust_split_point_array_side(thrust::device_vector<Point>& points, thrust::device_vector<Point>& points_side, 
                                     thrust::device_vector<Line>& l, int side){
 
-        
+
         Line* l_pointer = thrust::raw_pointer_cast(l.data());
 
         // resize space

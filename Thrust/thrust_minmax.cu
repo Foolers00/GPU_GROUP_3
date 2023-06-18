@@ -19,10 +19,9 @@ struct compare_point
 };
 
 void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<Line>& l){
+    l.resize(1);
     thrust::device_vector<Point>::iterator iter_max = thrust::max_element(points.begin(), points.end(), compare_point());
     thrust::device_vector<Point>::iterator iter_min = thrust::min_element(points.begin(), points.end(), compare_point());
-    Point max = *iter_max;
-    Point min = *iter_min;
 
     Point* max_ptr = thrust::raw_pointer_cast(&(*iter_max)); // device pointer
     Point* min_ptr = thrust::raw_pointer_cast(&(*iter_min)); // device pointer

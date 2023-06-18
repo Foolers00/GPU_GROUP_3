@@ -28,6 +28,8 @@ void thrust_quickhull(Point_array_par* points, thrust::host_vector<Line>& hull){
 
     // find points on hull
     thrust_minmax(points_thrust, l);
+    thrust::host_vector<Line> l_h = l;
+    printf("(%f, %f) - (%f, %f) \n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
 
     // splits array into above and below
     thrust_split_point_array(points_thrust, points_above, points_below, l);

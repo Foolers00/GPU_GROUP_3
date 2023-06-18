@@ -34,10 +34,9 @@ __device__ void dist(Line* l, const Point& z, double& res){
 
 
 void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<Point>& points, thrust::device_vector<Line>& l_max){
-
+    l_max.resize(2);
     Line* l_ptr = thrust::raw_pointer_cast(l.data());
     thrust::device_vector<Point>::iterator iter = thrust::max_element(points.begin(), points.end(), distance_functor(l_ptr));
-    Point max = *iter;
     Point* max_ptr = thrust::raw_pointer_cast(&(*iter)); //device pointer
 
     Line* l_p_max_ptr = thrust::raw_pointer_cast(&(*l_max.begin())); //device pointer
