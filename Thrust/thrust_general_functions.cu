@@ -118,7 +118,7 @@ void thrust_quickhull_split(thrust::device_vector<Point>& points, thrust::device
         thrust_quickhull_split(points_side, hull_side_2, l_max_q, side);
         thrust_combine_hull(hull_side_1, hull_side_2, hull_side);
     }                    
-                                  }
+}
 
 
 
