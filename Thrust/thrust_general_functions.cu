@@ -65,9 +65,6 @@ void thrust_first_quickhull_split(thrust::device_vector<Point>& points, thrust::
     thrust_max_distance(l, points_side, l_max);
     ////////////////////////////////
 
-    // thrust::host_vector<Line> l_h = l_max;
-    // printf("Line (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
-    // printf("Line (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[1]).p.x, static_cast<Line>(l_h[1]).p.y, static_cast<Line>(l_h[1]).q.x, static_cast<Line>(l_h[1]).q.y);
 
 
 
@@ -106,24 +103,13 @@ void thrust_quickhull_split(thrust::device_vector<Point>& points, thrust::device
 
     // find point with max distance
     thrust_max_distance(l, points_side, l_max);
-
-    if(points_side.size()>0){
-        // thrust::host_vector<Line> l_h = l_max;
-        // printf("Line (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
-        // printf("Line (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[1]).p.x, static_cast<Line>(l_h[1]).p.y, static_cast<Line>(l_h[1]).q.x, static_cast<Line>(l_h[1]).q.y);
-    }
     
 
     if(points_side.size() == 0){
         hull_side = l;
-        // thrust::host_vector<Line> l_h = hull_side;
-        // printf("Line added (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
     }
     else if(points_side.size() == 1){
         hull_side = l_max;
-        // thrust::host_vector<Line> l_h = hull_side;
-        // printf("Line added (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
-        // printf("Line added (%f, %f)-(%f, %f)\n", static_cast<Line>(l_h[1]).p.x, static_cast<Line>(l_h[1]).p.y, static_cast<Line>(l_h[1]).q.x, static_cast<Line>(l_h[1]).q.y);
     }
     else{
         thrust::device_vector<Line> l_p_max(l_max.begin(), l_max.begin()+1);
