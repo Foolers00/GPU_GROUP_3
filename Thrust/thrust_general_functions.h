@@ -49,12 +49,15 @@
 void thrust_quickhull(Point_array_par* points, thrust::host_vector<Line>& hull);
 
 
-void thrust_first_quickhull_split(thrust::device_vector<Point>& points, thrust::device_vector<Line>& hull,
-                                  Line l, int side);
+void thrust_first_quickhull_split(thrust::device_vector<Point>& points, thrust::device_vector<Line>& hull_side,
+                                  thrust::device_vector<Line>& l, int side);
 
+void thrust_quickhull_split(thrust::device_vector<Point>& points, thrust::device_vector<Line>& hull_side,
+                            thrust::device_vector<Line>& l, int side);
 
-void thrust_combine_hull(thrust::device_vector<Line>& hull_up, thrust::device_vector<Line>& hull_down, 
+void thrust_combine_hull(thrust::device_vector<Line>& hull_up, thrust::device_vector<Line>& hull_down,
                          thrust::device_vector<Line>& hull_result);
+
 
 
 

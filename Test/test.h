@@ -61,6 +61,11 @@
 #include "../Thrust/thrust_split.h"
 #endif
 
+#ifndef THRUST_GENERAL_FUNCTIONS
+#define THRUST_GENERAL_FUNCTIONS
+#include "../Thrust/thrust_general_functions.h"
+#endif
+
 
 Point* test_sequence_1();
 
@@ -131,6 +136,10 @@ void test_combinehull();
 */
 void test_quickhull();
 
+/*
+    tests parallel quickhull using thrust library
+*/
+void test_thrust_quickhull();
 
 void printData(size_t *data, const size_t size);
 
