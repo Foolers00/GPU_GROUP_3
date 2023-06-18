@@ -36,10 +36,6 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
         //thrust::device_vector<Point> points_gpu = points;
         Line* l_pointer = thrust::raw_pointer_cast(l.data());
 
-        thrust::host_vector<Line> l_h = l;
-        Line* l_pointerh = thrust::raw_pointer_cast(l_h.data());
-        printf("L.p: (%f, %f), L.q: (%f, %f)\n", l_pointerh->p.x, l_pointerh->p.y, l_pointerh->q.x, l_pointerh->q.y);
-
         // resize space
         points_above.resize(points.size());
         points_below.resize(points.size());
@@ -48,7 +44,6 @@ void thrust_split_point_array(thrust::device_vector<Point>& points, thrust::devi
         // move values
         auto points_above_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_above.begin(), check_point_location_functor(l_pointer, ABOVE));
         auto points_below_end = thrust::copy_if(thrust::device, points.begin(), points.end(), points_below.begin(), check_point_location_functor(l_pointer, BELOW));
-
         // set size
         points_above.resize(points_above_end-points_above.begin());
         points_below.resize(points_below_end-points_below.begin());
@@ -84,7 +79,7 @@ __device__ void check_point_location_thrust(Line l, Point z, int* result){
 
     init_vector_thrust(l.p, l.q, &v1);
     init_vector_thrust(l.p, z, &v2);
-    
+
     cross_product_thrust(v1, v2, &cross_result);
 
     if(cross_result>0){
