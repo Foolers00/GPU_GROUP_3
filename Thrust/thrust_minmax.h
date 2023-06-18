@@ -23,3 +23,5 @@
 #include <thrust/copy.h>
 #include <thrust/execution_policy.h>
 #endif
+
+void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<Line>& l);

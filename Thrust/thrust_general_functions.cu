@@ -27,7 +27,7 @@ void thrust_quickhull(Point_array_par* points, thrust::host_vector<Line>& hull){
 
 
     // find points on hull
-    /////////////////////
+    thrust_minmax(points_thrust, l);
 
     // splits array into above and below
     thrust_split_point_array(points_thrust, points_above, points_below, l);

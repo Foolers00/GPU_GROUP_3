@@ -10,44 +10,26 @@
 
 
 
-struct distance_functor
+struct compare_point
 {
-    Line* l;
-
-    distance_functor(Line* _l) : l(_l) {}
-
     __device__
-    float operator()(const Point& lhs, const Point& rhs) {
-        double res_lhs, res_rhs;
-        dist(l, lhs, res_lhs);
-        dist(l, rhs, res_rhs);
-        return res_lhs < res_rhs;
+    bool operator()(const Point& lhs, const Point& rhs) {
+        return lhs.x < rhs.x;
     }
 };
 
-__device__ void dist(Line* l, const Point& z, double& res){
-    double a = l->p.y - l->q.y;
-    double b = l->q.x - l->p.x;
-    double c = l->p.x * l->q.y - l->q.x * l->p.y;
-    // assert !(a == 0 || b == 0)
-    res = fabs(a * z.x  + b * z.y  + c)/sqrt(a * a + b * b);
-}
+void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<Line>& l){
+    thrust::device_vector<Point>::iterator iter_max = thrust::max_element(points.begin(), points.end(), compare_point());
+    thrust::device_vector<Point>::iterator iter_min = thrust::min_element(points.begin(), points.end(), compare_point());
+    Point max = *iter_max;
+    Point min = *iter_min;
 
-
-void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<Point>& points, thrust::device_vector<Line>& l_max){
+    Point* max_ptr = thrust::raw_pointer_cast(&(*iter_max)); // device pointer
+    Point* min_ptr = thrust::raw_pointer_cast(&(*iter_min)); // device pointer
 
     Line* l_ptr = thrust::raw_pointer_cast(l.data());
-    thrust::device_vector<Point>::iterator iter = thrust::max_element(points.begin(), points.end(), distance_functor(l_ptr));
-    Point max = *iter;
-    Point* max_ptr = thrust::raw_pointer_cast(&(*iter)); //device pointer
-
-    Line* l_p_max_ptr = thrust::raw_pointer_cast(&(*l_max.begin())); //device pointer
-    Line* l_max_q_ptr = thrust::raw_pointer_cast(&(*(l_max.begin() + 1))); //device pointer
-    cudaMemcpy(&(l_p_max_ptr->p), &(l_ptr->p), sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_p_max_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_max_q_ptr->p), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_max_q_ptr->q), &(l_ptr->q), sizeof(Point), cudaMemcpyDeviceToDevice);
-
+    cudaMemcpy(&(l_ptr->p), min_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(&(l_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
 }
 
 //int main(int argc, char** argv){
@@ -55,29 +37,30 @@ void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<P
 //
 //    Point_array_par* points = init_point_array_par(size);
 //
-//    Point near = (Point){.x = 1, .y = 2};
-//    Point far = (Point){.x = 1, .y = 22};
-//    Line l = (Line){.p = (Point){.x = 1, .y = 1}, .q = (Point){.x = 1000, .y = 1000}};
+//    Point left = (Point){.x = -1, .y = 2};
+//    Point middle = (Point){.x = 100, .y = 8};
+//    Point right = (Point){.x = 200, .y = 3};
 //
 //    for(int i = 0; i < size; i++) {
-//        points->array[i] = near;
-//        if (i == 1230000) points->array[i] = far;
+//        if (i == size/3) {
+//            points->array[i] = left;
+//        } else if (i == (size/2+size/3)) {
+//            points->array[i] = right;
+//        } else {
+//            points->array[i] = middle;
+//        }
 //    }
 //
-//    thrust::host_vector<Line> l_h(1);
-//    l_h[0] = l;
-//    thrust::device_vector<Line> l_d = l_h;
-//    thrust::device_vector<Line> l_max(2);
 //    thrust::device_vector<Point> d_points(size);
 //    d_points.resize(size);
 //    thrust::copy(&points->array[0], &points->array[size], d_points.begin());
-//    thrust_max_distance(l_d, d_points, l_max);
 //
-//    thrust::host_vector<Line> l_max_h = l_max;
+//    thrust::device_vector<Line> l_d(1);
 //
+//    thrust_minmax(d_points, l_d);
 //
-//    printf("line p_max: (%f, %f) - (%f, %f)\n", static_cast<Line>(l_max_h[0]).p.x, static_cast<Line>(l_max_h[0]).p.y, static_cast<Line>(l_max_h[0]).q.x, static_cast<Line>(l_max_h[0]).q.y);
-//    printf("line max_q: (%f, %f) - (%f, %f)\n", static_cast<Line>(l_max_h[1]).p.x, static_cast<Line>(l_max_h[1]).p.y, static_cast<Line>(l_max_h[1]).q.x, static_cast<Line>(l_max_h[1]).q.y);
+//    thrust::host_vector<Line> l_h = l_d;
 //
+//    printf("line l: (%f, %f) - (%f, %f)\n", static_cast<Line>(l_h[0]).p.x, static_cast<Line>(l_h[0]).p.y, static_cast<Line>(l_h[0]).q.x, static_cast<Line>(l_h[0]).q.y);
 //
 //}
