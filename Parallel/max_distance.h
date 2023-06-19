@@ -42,3 +42,5 @@ __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max
  */
 void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q);
 
+void max_distance_stream_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q, cudaStream_t* streams);
+

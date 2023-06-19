@@ -40,7 +40,7 @@ __global__ void split_prescan(size_t* g_odata, size_t* g_idata, size_t* aux, int
     array_size and bytes array_bytes, mode: INCLUSIVE/EXCLUSIVE
 */
 void master_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t array_bytes, int mode);
-void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t array_bytes, int mode);
+
 
 /*
     prefix scan that can scan upto a size of 1024^3*MAX_BLOCK_COUNT, i_array and o_array are gpu memories with size
@@ -50,7 +50,7 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
                             size_t array_grid_size, size_t array_rem_grid_size, size_t array_loop_cnt, int mode);
 
 void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
-                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode);
+                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode, cudaStream_t stream);
 
 /*
     shifts the array by one and inserts at index 0 a zero

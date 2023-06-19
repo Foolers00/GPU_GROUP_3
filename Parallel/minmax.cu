@@ -13,6 +13,9 @@
 #endif
 
 
+
+
+
 __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
 
     // 1024 * 16 * 2 = 32,8 KB
@@ -51,6 +54,15 @@ __global__ void minmax_kernel(minmaxPoint points, int size, minmaxPoint result){
     }
 }
 
+
+__global__ void assign_max_lines_par(Line* l_ptr, Point* min_ptr, Point* max_ptr){
+
+    if(threadIdx.x == 0){
+        l_ptr->p = *min_ptr;
+        l_ptr->q = *max_ptr;
+    }
+}
+
 void minmax_cuda(Point_array_par* points, Line** l_pq){
     int size = points->size;
     int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
@@ -81,8 +93,7 @@ void minmax_cuda(Point_array_par* points, Line** l_pq){
 
     // allocate GPU mem at address handed over as arguments
     CHECK(cudaMalloc(l_pq, sizeof(Line)));
-    CHECK(cudaMemcpy(&(*l_pq)->q, points_out.max, sizeof(Point), cudaMemcpyDeviceToDevice));
-    CHECK(cudaMemcpy(&(*l_pq)->p, points_out.min, sizeof(Point), cudaMemcpyDeviceToDevice));
+    assign_max_lines_par<<<1, 1>>>(*l_pq, points_out.min, points_out.max);
 
     CHECK(cudaFree(points_out.min));
     CHECK(cudaFree(points_out.max));
@@ -90,6 +101,62 @@ void minmax_cuda(Point_array_par* points, Line** l_pq){
     CHECK(cudaFree(points_in.max));
 
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Stream functions
+
+
+void minmax_stream_cuda(Point_array_par* points, Line** l_pq, cudaStream_t* streams){
+    int size = points->size;
+    int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
+    int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
+
+    minmaxPoint points_in;
+    CHECK(cudaMalloc((void**)&(points_in.max), size * sizeof(Point)));
+    CHECK(cudaMalloc((void**)&(points_in.min), size * sizeof(Point)));
+    CHECK(cudaMemcpyAsync(points_in.max, points->array, size*sizeof(Point), cudaMemcpyHostToDevice, streams[0]));
+    CHECK(cudaMemcpyAsync(points_in.min, points->array, size*sizeof(Point), cudaMemcpyHostToDevice, streams[1]));
+
+
+    minmaxPoint points_out;
+    CHECK(cudaMalloc((void**)&(points_out.max), numBlocks * sizeof(Point)));
+    CHECK(cudaMalloc((void**)&(points_out.min), numBlocks * sizeof(Point)));
+
+    // Synchronice Kernels
+    cudaDeviceSynchronize();
+
+    while(size > threadsPerBlock){
+
+        minmax_kernel<<<numBlocks, threadsPerBlock, 0, streams[0]>>>(points_in, size, points_out);
+        CHECK(cudaMemcpyAsync(points_in.max, points_out.max, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice, streams[0]));
+        CHECK(cudaMemcpyAsync(points_in.min, points_out.min, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice, streams[1]));
+        size = numBlocks;
+        numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
+        
+        // Synchronice Kernels
+        cudaDeviceSynchronize();
+    }
+
+    //deal with the rest
+    minmax_kernel<<<1, threadsPerBlock, 0, streams[0]>>>(points_in, size, points_out);
+
+    // allocate GPU mem at address handed over as arguments
+    CHECK(cudaMalloc(l_pq, sizeof(Line)));
+    assign_max_lines_par<<<1, 1, 0, streams[0]>>>(*l_pq, points_out.min, points_out.max);
+
+
+
+    // free memory
+    CHECK(cudaFree(points_in.min));
+    CHECK(cudaFree(points_in.max));
+    CHECK(cudaFree(points_out.min));
+    CHECK(cudaFree(points_out.max));
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 //int main(int argc, char** argv){
 //

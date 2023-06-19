@@ -33,7 +33,7 @@ __device__ void dist(Line* l, const Point& z, double& res){
 }
 
 
-__global__ void assign_max_lines(Line* l_ptr, Line* l_p_max_ptr, Line* l_max_q_ptr, Point* max_ptr){
+__global__ void assign_max_lines_thrust(Line* l_ptr, Line* l_p_max_ptr, Line* l_max_q_ptr, Point* max_ptr){
     
     if(threadIdx.x == 0){
         l_p_max_ptr->p = l_ptr->p;
@@ -54,7 +54,7 @@ void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<P
     Line* l_p_max_ptr = thrust::raw_pointer_cast(&(*l_max.begin())); //device pointer
     Line* l_max_q_ptr = thrust::raw_pointer_cast(&(*(l_max.begin() + 1))); //device pointer
 
-    assign_max_lines<<<1, 1>>>(l_ptr, l_p_max_ptr, l_max_q_ptr, max_ptr);
+    assign_max_lines_thrust<<<1, 1>>>(l_ptr, l_p_max_ptr, l_max_q_ptr, max_ptr);
 
 }
 

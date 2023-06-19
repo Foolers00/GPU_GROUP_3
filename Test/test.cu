@@ -929,7 +929,7 @@ void test_quickhull(){
 
 
     // set vars
-    size = 10000;
+    size = 10000000;
     l_bound = -10000000;
     u_bound = 10000000;
 

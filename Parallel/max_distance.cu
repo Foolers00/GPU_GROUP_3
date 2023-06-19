@@ -56,6 +56,19 @@ __global__ void max_distance_kernel(Line* l, Point* points, int size, Point* max
     }
 }
 
+
+__global__ void assign_max_lines_par(Line* l_ptr, Line* l_p_max_ptr, Line* l_max_q_ptr, Point* max_ptr){
+
+    if(threadIdx.x == 0){
+        l_p_max_ptr->p = l_ptr->p;
+        l_p_max_ptr->q = *max_ptr;
+
+        l_max_q_ptr->p = *max_ptr;
+        l_max_q_ptr->q = l_ptr->q;
+    }
+}
+
+
 void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q){
     
     if(points->size == 0){
@@ -65,10 +78,6 @@ void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** 
     int size = points->size;
     int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
-
-//    Line* d_l;
-//    CHECK(cudaMalloc((void**)&d_l, sizeof(Line)));
-//    CHECK(cudaMemcpy(d_l, &l, sizeof(Line), cudaMemcpyHostToDevice));
 
     Point* d_points_in;
     CHECK(cudaMalloc((void**)&d_points_in, size * sizeof(Point)));
@@ -95,16 +104,67 @@ void max_distance_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** 
     // allocate GPU mem at addresses handed over as arguments
     CHECK(cudaMalloc(l_p_max, sizeof(Line)));
     CHECK(cudaMalloc(l_max_q, sizeof(Line)));
-    CHECK(cudaMemcpy(&(*l_p_max)->p, &l->p, sizeof(Point), cudaMemcpyDeviceToDevice));
-    CHECK(cudaMemcpy(&(*l_p_max)->q, d_max, sizeof(Point), cudaMemcpyDeviceToDevice));
-    CHECK(cudaMemcpy(&(*l_max_q)->p, d_max, sizeof(Point), cudaMemcpyDeviceToDevice));
-    CHECK(cudaMemcpy(&(*l_max_q)->q, &l->q, sizeof(Point), cudaMemcpyDeviceToDevice));
+
+    assign_max_lines_par<<<1, 1>>>(l, *l_p_max, *l_max_q, d_max);
 
     CHECK(cudaFree(d_max));
     CHECK(cudaFree(d_points_in));
     CHECK(cudaFree(d_points_out));
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Stream functions
+
+void max_distance_stream_cuda(Line* l, Point_array_par* points, Line** l_p_max, Line** l_max_q, cudaStream_t* streams){
+    
+    if(points->size == 0){
+        return;
+    }
+
+    int size = points->size;
+    int threadsPerBlock = BLOCKSIZE; //!!! always power of two and max 1024 because of static size of shared array in kernel !!!
+    int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
+
+    Point* d_points_in;
+    CHECK(cudaMalloc((void**)&d_points_in, size * sizeof(Point)));
+    CHECK(cudaMemcpyAsync(d_points_in, points->array, size*sizeof(Point), cudaMemcpyDeviceToDevice, streams[0]));
+    //d_points_in = points->array;
+
+    Point* d_points_out;
+    CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
+
+
+    while(size > threadsPerBlock){
+        max_distance_kernel<<<numBlocks, threadsPerBlock, 0, streams[0]>>>(l, d_points_in, size, d_points_out);
+        CHECK(cudaMemcpyAsync(d_points_in, d_points_out, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice, streams[0]));
+        size = numBlocks;
+        numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
+        CHECK(cudaFree(d_points_out));
+        CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
+    }
+
+    Point* d_max;
+    CHECK(cudaMalloc((void**)&d_max,sizeof(Point)));
+    //deal with the rest
+    max_distance_kernel<<<1, threadsPerBlock, 0, streams[0]>>>(l, d_points_in, size,d_max);
+
+    // allocate GPU mem at addresses handed over as arguments
+    CHECK(cudaMalloc(l_p_max, sizeof(Line)));
+    CHECK(cudaMalloc(l_max_q, sizeof(Line)));
+    
+    // assign lines
+    assign_max_lines_par<<<1, 1, 0, streams[0]>>>(l, *l_p_max, *l_max_q, d_max);
+
+    CHECK(cudaFree(d_max));
+    CHECK(cudaFree(d_points_in));
+    CHECK(cudaFree(d_points_out));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 //int main(int argc, char** argv){
 //    int size = 100000000;

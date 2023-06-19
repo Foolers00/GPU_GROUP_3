@@ -28,6 +28,13 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
 void split_point_array_side(Point_array_par* points, Point_array_par* points_side, Line* l, int side);
 
 
+void split_stream_point_array(Point_array_par* points, Point_array_par* points_above, 
+    Point_array_par* points_below, Line* l, cudaStream_t* streams);
+
+
+void split_stream_point_array_side(Point_array_par* points, Point_array_par* points_side, Line* l, int side, cudaStream_t* streams);
+
+
 __global__ void setbits(size_t *above_bits, size_t *below_bits, Point* points, Line* l, 
                             size_t array_size, int block_offset);
 

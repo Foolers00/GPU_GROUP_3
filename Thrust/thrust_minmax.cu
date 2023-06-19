@@ -19,7 +19,7 @@ struct compare_point
 };
 
 
-__global__ void assign_max_lines(Line* l_ptr, Point* min_ptr, Point* max_ptr){
+__global__ void assign_max_lines_thrust(Line* l_ptr, Point* min_ptr, Point* max_ptr){
     
     if(threadIdx.x == 0){
         l_ptr->p = *min_ptr;
@@ -36,8 +36,9 @@ void thrust_minmax(thrust::device_vector<Point>& points, thrust::device_vector<L
     Point* min_ptr = thrust::raw_pointer_cast(&(*iter_min)); // device pointer
 
     Line* l_ptr = thrust::raw_pointer_cast(l.data());
-    cudaMemcpy(&(l_ptr->p), min_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(&(l_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
+    // cudaMemcpy(&(l_ptr->p), min_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
+    // cudaMemcpy(&(l_ptr->q), max_ptr, sizeof(Point), cudaMemcpyDeviceToDevice);
+    assign_max_lines_thrust<<<1, 1>>>(l_ptr, min_ptr, max_ptr);
 }
 
 

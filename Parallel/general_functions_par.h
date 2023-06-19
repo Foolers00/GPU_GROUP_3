@@ -41,17 +41,25 @@
 
 
 Hull_par* quickhull_par(Point_array_par* points);
-Hull_par* new_quickhull_par(Point_array_par* points);
 
 Hull_par* first_quickhull_split_par(Point_array_par* points, Line* l, int side);
 
 Hull_par* quickhull_split_par(Point_array_par* points, Line* l, int side);
 
+Hull_par* quickhull_stream_par(Point_array_par* points);
+
+Hull_par* first_quickhull_stream_split_par(Point_array_par* points, Line* l, int side, cudaStream_t* streams);
+
+Hull_par* quickhull_stream_split_par(Point_array_par* points, Line* l, int side, cudaStream_t* streams);
+
 void workload_calc(size_t* grid_size, size_t* rem_grid_size, size_t* loop_cnt, size_t* sizef, size_t size);
 
 Point_array_par* generate_random_points_par(int num_of_points, double l_bound, double u_bound);
 
-
 Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2);
 
+Hull_par* combine_hull_stream_par(Hull_par* hull_1, Hull_par* hull_2, cudaStream_t* streams);
+
 void points_on_hull_par(Point_array_par* points, Line** l_pq);
+
+void points_on_hull_stream_par(Point_array_par* points, Line** l_pq, cudaStream_t* streams);

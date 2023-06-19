@@ -564,298 +564,10 @@ void master_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, si
 }
 
 
-void master_stream_prescan(size_t* o_array, size_t* i_array, size_t array_size, size_t array_bytes, int mode){
 
-    /////////////////////////// 
-    // device var
-    int dev;
-    
-    ///////////////////////////
-    // array var
-
-    size_t array_grid_size;
-    size_t array_rem_grid_size;
-    size_t array_loop_cnt;	
-    size_t array_fsize;
-    size_t array_fbytes;
-
-    ///////////////////////////
-    // aux var
-    size_t aux_size;
-    size_t aux_grid_size;
-    size_t aux_rem_grid_size;
-    size_t aux_loop_cnt;
-    size_t aux_fsize;
-    size_t aux_fbytes;
-
-    ///////////////////////////
-    // aux_2 var
-    size_t aux_2_size;
-    size_t aux_2_grid_size;
-    size_t aux_2_rem_grid_size;
-    size_t aux_2_loop_cnt;
-    size_t aux_2_fsize;
-    size_t aux_2_fbytes;
-
-    ///////////////////////////
-    // aux_3 var
-    size_t aux_3_size;
-    size_t aux_3_grid_size;
-    size_t aux_3_rem_grid_size;
-    size_t aux_3_loop_cnt;
-    size_t aux_3_fsize;
-    size_t aux_3_fbytes;
-
-    ///////////////////////////
-    // aux_4 var
-    size_t aux_4_grid_size;
-    size_t aux_4_fsize;
-    size_t aux_4_fbytes;
-
-    ///////////////////////////
-    // aux_5 var
-    size_t aux_5_fsize;
-    size_t aux_5_fbytes;
-
-    ///////////////////////////
-    // memory var
-    size_t* d_data;
-    size_t* o_data;
-    size_t* t_data;
-
-    size_t* aux_data;
-    size_t* aux_2_data;
-    size_t* aux_3_data;
-    size_t* aux_4_data;
-    size_t* aux_5_data;
-
-    ///////////////////////////
-    // device set up
-
-    dev = 0;
-    CHECK(cudaSetDevice(dev));
-
-    ///////////////////////////
-    // array set up
-    workload_calc(&array_grid_size, &array_rem_grid_size, &array_loop_cnt, &array_fsize, array_size);
-    array_fbytes = array_fsize*sizeof(size_t);
-
-    // stream var
-    cudaStream_t streams[array_loop_cnt];
-
-    ///////////////////////////
-    // aux set up
-    aux_size = array_grid_size*array_loop_cnt + array_rem_grid_size;
-    workload_calc(&aux_grid_size, &aux_rem_grid_size, &aux_loop_cnt, &aux_fsize, aux_size);
-    aux_fbytes = aux_fsize*sizeof(size_t);
-
-    ///////////////////////////
-    // aux_2 set up
-    aux_2_size = aux_grid_size*aux_loop_cnt + aux_rem_grid_size;
-    workload_calc(&aux_2_grid_size, &aux_2_rem_grid_size, &aux_2_loop_cnt, &aux_2_fsize, aux_2_size);
-    aux_2_fbytes = aux_2_fsize*sizeof(size_t);
-
-    ///////////////////////////
-    // aux_3 set up
-    aux_3_size = aux_2_grid_size*aux_2_loop_cnt + aux_2_rem_grid_size;
-    workload_calc(&aux_3_grid_size, &aux_3_rem_grid_size, &aux_3_loop_cnt, &aux_3_fsize, aux_3_size);
-    aux_3_fbytes = aux_3_fsize*sizeof(size_t);
-
-    ///////////////////////////
-    // aux_4 set up
-    aux_4_grid_size = 1;
-    aux_4_fsize = 2*BLOCKSIZE;
-    aux_4_fbytes = aux_4_fsize*sizeof(size_t);
-
-    ///////////////////////////
-    // aux_5 set up
-    aux_5_fsize = 2*BLOCKSIZE;
-    aux_5_fbytes = aux_5_fsize*sizeof(size_t);
-
-    ///////////////////////////
-    // memory set up
-    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
-        CHECK(cudaMalloc((size_t **)&d_data, array_fbytes));
-    #endif
-    CHECK(cudaMalloc((size_t **)&o_data, array_fbytes));
-    CHECK(cudaMalloc((size_t **)&t_data, array_fbytes));
-
-
-    CHECK(cudaMalloc((size_t **)&aux_data, aux_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_2_data, aux_2_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_3_data, aux_3_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_4_data, aux_4_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_5_data, aux_5_fbytes));
-    
-
-
-    // copy data and workloads from host to device
-
-    #if MEMORY_MODEL == ZERO_MEMORY
-        CHECK(cudaHostGetDevicePointer((void **)&d_data, (void *)i_array, 0));
-    #else
-        //CHECK(cudaMemset(d_data, 0, array_fbytes));
-        CHECK(cudaMemcpy(d_data, i_array, array_bytes, cudaMemcpyHostToDevice));
-    #endif
-
-    // init streams
-    for(int i = 0; i < array_loop_cnt; i++){
-         cudaStreamCreate(&streams[i]);
-    }
-
-    ///////////////////////////
-    // prefix scan
-
-    // prefix on array
-    for(size_t i = 0; i < array_loop_cnt; i++){
-        split_prescan<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (t_data, d_data, aux_data, i);
-	}
-    if(array_rem_grid_size > 0){
-        split_prescan<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
-        (t_data, d_data, aux_data, array_loop_cnt);
-    }
-
-    cudaDeviceSynchronize();
-
-    // prefix on aux
-    for(int i = 0; i < aux_loop_cnt; i++){
-        split_prescan<<<aux_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_data, aux_data, aux_2_data, i);
-    }
-    if(aux_rem_grid_size > 0){
-        split_prescan<<<aux_rem_grid_size, BLOCKSIZE, 0, streams[aux_loop_cnt]>>>
-        (aux_data, aux_data, aux_2_data, aux_loop_cnt);
-    }
-
-    cudaDeviceSynchronize();
-
-    // prefix on aux_2
-    for(int i = 0; i < aux_2_loop_cnt; i++){
-        split_prescan<<<aux_2_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_2_data, aux_2_data, aux_3_data, i);
-    }
-    if(aux_2_rem_grid_size > 0){
-        split_prescan<<<aux_2_rem_grid_size, BLOCKSIZE, 0, streams[aux_2_loop_cnt]>>>
-        (aux_2_data, aux_2_data, aux_3_data, aux_2_loop_cnt);
-    }
-
-    cudaDeviceSynchronize();
-
-    // prefix on aux_3
-    for(int i = 0; i < aux_3_loop_cnt; i++){
-        split_prescan<<<aux_3_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_3_data, aux_3_data, aux_4_data, i);
-    }
-    if(aux_3_rem_grid_size > 0){
-        split_prescan<<<aux_3_rem_grid_size, BLOCKSIZE, 0, streams[aux_3_loop_cnt]>>>
-        (aux_3_data, aux_3_data, aux_4_data, aux_3_loop_cnt);
-    }
-
-    cudaDeviceSynchronize();
-
-    // prefix on aux_4
-    split_prescan<<<aux_4_grid_size, BLOCKSIZE, 0, streams[0]>>>
-    (aux_4_data, aux_4_data, aux_5_data, 0);
-
-    cudaDeviceSynchronize();
-
-    // aux_3+aux_4
-    for(int i = 0; i < aux_3_loop_cnt; i++){
-        add_block<<<aux_3_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_3_data, aux_4_data, i);
-    }
-    if(aux_3_rem_grid_size > 0){
-        add_block<<<aux_3_rem_grid_size, BLOCKSIZE, 0, streams[aux_3_loop_cnt]>>>
-        (aux_3_data, aux_4_data, aux_3_loop_cnt);       
-    }
-
-    cudaDeviceSynchronize();
-
-    
-    // aux_2+aux_3
-    for(int i = 0; i < aux_2_loop_cnt; i++){
-        add_block<<<aux_2_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_2_data, aux_3_data, i);
-    }
-    if(aux_2_rem_grid_size > 0){
-        add_block<<<aux_2_rem_grid_size, BLOCKSIZE, 0, streams[aux_2_loop_cnt]>>>
-        (aux_2_data, aux_3_data, aux_2_loop_cnt);       
-    }
-
-    cudaDeviceSynchronize();
-
-    // aux+aux_2
-    for(int i = 0; i < aux_loop_cnt; i++){
-        add_block<<<aux_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (aux_data, aux_2_data, i);
-    }
-    if(aux_rem_grid_size > 0){
-        add_block<<<aux_rem_grid_size, BLOCKSIZE, 0, streams[aux_loop_cnt]>>>
-        (aux_data, aux_2_data, aux_loop_cnt);       
-    }
-
-    cudaDeviceSynchronize();
-
-    // array+aux
-    for(int i = 0; i < array_loop_cnt; i++){
-        add_block<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
-        (t_data, aux_data, i);
-    }
-    if(array_rem_grid_size > 0){
-        add_block<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
-        (t_data, aux_data, array_loop_cnt);      
-    }
-
-    cudaDeviceSynchronize();
-    
-
-    if(mode == EXCLUSIVE){
-        // array gets shifted by one for exclusive sum
-        for(int i = 0; i < array_loop_cnt; i++){
-            shift_block<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
-            (o_data, t_data, array_fsize, i);
-        }
-        if(array_rem_grid_size > 0){
-            shift_block<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
-            (o_data, t_data, array_fsize, array_loop_cnt); 
-        }
-
-        cudaDeviceSynchronize();
-    }
-    else{
-        size_t* temp;
-        temp = o_data;
-        o_data = t_data;
-        t_data = temp;
-    }
-
-    // destroy streams
-    for(int i = 0; i < array_loop_cnt; i++){
-         cudaStreamDestroy(streams[i]);
-    }
-
-    // copy back results
-    CHECK(cudaMemcpy(o_array, o_data, array_bytes, cudaMemcpyDeviceToHost));
-
-    // free memory
-    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
-        CHECK(cudaFree(d_data));
-    #endif
-    CHECK(cudaFree(t_data));
-    CHECK(cudaFree(o_data));
-
-
-    CHECK(cudaFree(aux_data));
-    CHECK(cudaFree(aux_2_data));
-    CHECK(cudaFree(aux_3_data));
-    CHECK(cudaFree(aux_4_data));
-
-
-}
 
 void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fsize, size_t array_fbytes, 
-                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode){
+                            int array_grid_size, int array_rem_grid_size, int array_loop_cnt, int mode, cudaStream_t stream){
 
     ///////////////////////////
     // aux var
@@ -905,9 +617,6 @@ void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fs
     size_t* aux_4_data;
     size_t* aux_5_data;
 
-    // stream var
-    cudaStream_t streams[array_loop_cnt];
-
     ///////////////////////////
     // aux set up
     aux_size = array_grid_size*array_loop_cnt + array_rem_grid_size;
@@ -948,141 +657,123 @@ void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fs
     CHECK(cudaMalloc((size_t **)&aux_4_data, aux_4_fbytes));
     CHECK(cudaMalloc((size_t **)&aux_5_data, aux_5_fbytes));
 
-    // init streams
-    for(int i = 0; i < array_loop_cnt; i++){
-         cudaStreamCreate(&streams[i]);
-    }
+    
 
     ///////////////////////////
     // prefix scan
 
     // prefix on array
     for(size_t i = 0; i < array_loop_cnt; i++){
-        split_prescan<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        split_prescan<<<array_grid_size, BLOCKSIZE, 0, stream>>>
         (t_data, i_array, aux_data, i);
 	}
     if(array_rem_grid_size > 0){
-        split_prescan<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
+        split_prescan<<<array_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (t_data, i_array, aux_data, array_loop_cnt);
     }
 
-    cudaDeviceSynchronize();
 
     // prefix on aux
     for(int i = 0; i < aux_loop_cnt; i++){
-        split_prescan<<<aux_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        split_prescan<<<aux_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_data, aux_data, aux_2_data, i);
     }
     if(aux_rem_grid_size > 0){
-        split_prescan<<<aux_rem_grid_size, BLOCKSIZE, 0, streams[aux_loop_cnt]>>>
+        split_prescan<<<aux_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_data, aux_data, aux_2_data, aux_loop_cnt);
     }
 
-    cudaDeviceSynchronize();
 
     // prefix on aux_2
     for(int i = 0; i < aux_2_loop_cnt; i++){
-        split_prescan<<<aux_2_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        split_prescan<<<aux_2_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_2_data, aux_2_data, aux_3_data, i);
     }
     if(aux_2_rem_grid_size > 0){
-        split_prescan<<<aux_2_rem_grid_size, BLOCKSIZE, 0, streams[aux_2_loop_cnt]>>>
+        split_prescan<<<aux_2_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_2_data, aux_2_data, aux_3_data, aux_2_loop_cnt);
     }
 
-    cudaDeviceSynchronize();
 
     // prefix on aux_3
     for(int i = 0; i < aux_3_loop_cnt; i++){
-        split_prescan<<<aux_3_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        split_prescan<<<aux_3_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_3_data, aux_3_data, aux_4_data, i);
     }
     if(aux_3_rem_grid_size > 0){
-        split_prescan<<<aux_3_rem_grid_size, BLOCKSIZE, 0, streams[aux_3_loop_cnt]>>>
+        split_prescan<<<aux_3_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_3_data, aux_3_data, aux_4_data, aux_3_loop_cnt);
     }
 
-    cudaDeviceSynchronize();
 
     // prefix on aux_4
-    split_prescan<<<aux_4_grid_size, BLOCKSIZE, 0, streams[0]>>>
+    split_prescan<<<aux_4_grid_size, BLOCKSIZE, 0, stream>>>
     (aux_4_data, aux_4_data, aux_5_data, 0);
 
-    cudaDeviceSynchronize();
 
     // aux_3+aux_4
     for(int i = 0; i < aux_3_loop_cnt; i++){
-        add_block<<<aux_3_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        add_block<<<aux_3_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_3_data, aux_4_data, i);
     }
     if(aux_3_rem_grid_size > 0){
-        add_block<<<aux_3_rem_grid_size, BLOCKSIZE, 0, streams[aux_3_loop_cnt]>>>
+        add_block<<<aux_3_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_3_data, aux_4_data, aux_3_loop_cnt);       
     }
 
-    cudaDeviceSynchronize();
 
     
     // aux_2+aux_3
     for(int i = 0; i < aux_2_loop_cnt; i++){
-        add_block<<<aux_2_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        add_block<<<aux_2_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_2_data, aux_3_data, i);
     }
     if(aux_2_rem_grid_size > 0){
-        add_block<<<aux_2_rem_grid_size, BLOCKSIZE, 0, streams[aux_2_loop_cnt]>>>
+        add_block<<<aux_2_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_2_data, aux_3_data, aux_2_loop_cnt);       
     }
 
-    cudaDeviceSynchronize();
 
     // aux+aux_2
     for(int i = 0; i < aux_loop_cnt; i++){
-        add_block<<<aux_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        add_block<<<aux_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_data, aux_2_data, i);
     }
     if(aux_rem_grid_size > 0){
-        add_block<<<aux_rem_grid_size, BLOCKSIZE, 0, streams[aux_loop_cnt]>>>
+        add_block<<<aux_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (aux_data, aux_2_data, aux_loop_cnt);       
     }
 
-    cudaDeviceSynchronize();
 
     // array+aux
     for(int i = 0; i < array_loop_cnt; i++){
-        add_block<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
+        add_block<<<array_grid_size, BLOCKSIZE, 0, stream>>>
         (t_data, aux_data, i);
     }
     if(array_rem_grid_size > 0){
-        add_block<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
+        add_block<<<array_rem_grid_size, BLOCKSIZE, 0, stream>>>
         (t_data, aux_data, array_loop_cnt);      
     }
 
-    cudaDeviceSynchronize();
     
 
     if(mode == EXCLUSIVE){
         // array gets shifted by one for exclusive sum
         for(int i = 0; i < array_loop_cnt; i++){
-            shift_block<<<array_grid_size, BLOCKSIZE, 0, streams[i]>>>
+            shift_block<<<array_grid_size, BLOCKSIZE, 0, stream>>>
             (o_array, t_data, array_fsize, i);
         }
         if(array_rem_grid_size > 0){
-            shift_block<<<array_rem_grid_size, BLOCKSIZE, 0, streams[array_loop_cnt]>>>
+            shift_block<<<array_rem_grid_size, BLOCKSIZE, 0, stream>>>
             (o_array, t_data, array_fsize, array_loop_cnt); 
         }
 
-        cudaDeviceSynchronize();
     }
     else{
         size_t* temp;
         temp = o_array;
         o_array = t_data;
         t_data = temp;
-    }
-
-    // destroy streams
-    for(int i = 0; i < array_loop_cnt; i++){
-         cudaStreamDestroy(streams[i]);
     }
 
     // free memory

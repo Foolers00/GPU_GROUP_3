@@ -35,6 +35,8 @@ typedef struct{
  */
 void minmax_cuda(Point_array_par* points, Line** l_pq);
 
+void minmax_stream_cuda(Point_array_par* points, Line** l_pq, cudaStream_t* streams);
+
 
 /*
  * kernel function calculating min and max (in terms of x coordinates) elements of points
