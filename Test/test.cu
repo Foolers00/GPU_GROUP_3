@@ -1034,9 +1034,140 @@ void test_quickhull(){
     CHECK(cudaDeviceReset());
 }
 
+void test_quickhull_on_circle(){
+
+    // device var
+    int dev;
+
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // clock
+    clock_t tic;
+    clock_t toc;
+    double cpu_time;
+    double gpu_time;
+
+    // vars
+    size_t size;
+
+    // cpu
+    Point_array* points_cpu;
+    Hull* hull_cpu;
+
+    // gpu
+    Point_array_par* points_gpu;
+    Hull_par* hull_gpu;
+
+    // state
+    bool state = true;
 
 
+    // set vars
+    size = 10000;
 
+    std::cout << "test" << std::endl;
+    points_cpu = init_point_array(2*size);
+    points_gpu = generate_random_points_on_circle_par(size);
+
+    //readPointsFromCSV("points_mistake_1", &points_gpu);
+
+
+    memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+    points_cpu->curr_size = size;
+
+    //writePointArrayToCSV(points_cpu);
+
+    tic = clock();
+    // hull_cpu = quickhull(points_cpu);
+    toc = clock();
+    cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+    //writeHullArrayToCSV(hull_cpu);
+    std::cout << "test2" << std::endl;
+
+    tic = clock();
+    hull_gpu = quickhull_par(points_gpu);
+    toc = clock();
+    gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+    //writeHullparArrayToCSV(hull_gpu);
+
+
+    bool state_2 = false;
+
+    printf("Compare result: ");
+    for(int i = 0; i < hull_cpu->curr_size; i++){
+        state_2 = false;
+        for(int j = 0; j < hull_gpu->size; j++){
+            if(compare_lines(hull_cpu->array[i], hull_gpu->array[j])){
+                state_2 = true;
+            }
+            else{
+                if(hull_cpu->array[i].p.x == hull_cpu->array[i].q.x && hull_gpu->array[j].p.x == hull_gpu->array[j].q.x &&
+                    hull_cpu->array[i].p.x == hull_gpu->array[j].p.x){
+                    state_2 = true;
+                }
+                if(hull_cpu->array[i].p.y == hull_cpu->array[i].q.y && hull_gpu->array[j].p.y == hull_gpu->array[j].q.y &&
+                    hull_cpu->array[i].p.y == hull_gpu->array[j].p.y){
+                    state_2 = true;
+                }
+            }
+
+        }
+        if(state_2 == false){
+            state = false;
+            printf("This lines does not appear: Cpu: (%f, %f)-(%f, %f)\n",
+                    hull_cpu->array[i].p.x, hull_cpu->array[i].p.y, hull_cpu->array[i].q.x, hull_cpu->array[i].q.y);
+            for(int z = 0; z < hull_gpu->size; z++){
+                printf("Gpu lines: (%f, %f)-(%f, %f)\n",  hull_gpu->array[z].p.x, hull_gpu->array[z].p.y, hull_gpu->array[z].q.x, hull_gpu->array[z].q.y);
+            }
+        }
+        
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    printf("Size result: ");
+    if(points_cpu->curr_size != points_gpu->size){
+        printf("Sizes do not match: CPU: %lu, GPU: %lu\n", points_cpu->curr_size, points_gpu->size);
+        state = false;
+    }
+
+    if(state){
+        printf("Comparison Success\n");
+    }
+    else{
+       printf("Comparison Failed\n"); 
+    }
+
+
+    if(state){
+        printf("Comparison Success\n");
+        printf("CPU time: %f, GPU time: %f\n", cpu_time, gpu_time);
+    }
+   
+
+    // free memory
+    free_point_array(points_cpu);
+    free_point_array_par(points_gpu);
+    free_hull(hull_cpu);
+    free_hull_par(hull_gpu);
+
+
+    //}
+
+    // reset device
+    CHECK(cudaDeviceReset());
+}
 
 
 

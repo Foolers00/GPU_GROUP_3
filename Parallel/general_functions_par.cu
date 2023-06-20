@@ -205,6 +205,29 @@ Point_array_par* generate_random_points_par(int num_of_points, double l_bound, d
 
 
 
+Point_array_par* generate_random_points_on_circle_par(int num_of_points) {
+    time_t t;
+    double difference = 1.0;
+    double offset_x = 0.0;
+    double offset_y = 0.0;
+    srand((unsigned) time(&t));
+
+    Point_array_par* points = init_point_array_par(num_of_points);
+    for (size_t i = 0; i < num_of_points; i++) {
+        offset_x = rand() % (int) difference;
+        offset_y = rand() % (int) difference;
+
+        double norm = sqrt(offset_x * offset_x + offset_y * offset_y);
+        double normalized_x = offset_x / norm;
+        double normalized_y = offset_y / norm;
+
+        points->array[i] = (Point) {.x = normalized_x, .y = normalized_y};
+    }
+
+    return points;
+}
+
+
 Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2){
 
     // vars

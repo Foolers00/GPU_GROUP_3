@@ -94,6 +94,11 @@ Point_array* generate_random_points(int num_of_points, double l_bound, double u_
 
 
 /*
+    generates a Point array with random values with norm 1
+*/
+Point_array* generate_random_points_on_circle(int num_of_points);
+
+/*
     sets p(min x) and q(max x) to the two points from the array points that must be on the Hull
 */
 void points_on_hull(Point_array* points, Point* p, Point* q);

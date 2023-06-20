@@ -116,6 +116,27 @@ Point_array* generate_random_points(int num_of_points, double l_bound, double u_
 }
 
 
+Point_array* generate_random_points_on_circle(int num_of_points){
+
+    time_t t;
+    double difference = 2.0;
+    double offset_x = 0.0;
+    double offset_y = 0.0;
+    srand((unsigned) time(&t));
+
+    Point_array* points = init_point_array(num_of_points * 2);
+    for(size_t i = 0; i < num_of_points; i++){        
+        offset_x = rand() % (int)difference;
+        offset_y = rand() % (int)difference;
+        double norm = sqrt(offset_x * offset_x + offset_y * offset_y);
+        add_to_point_array(points, (Point) {.x = offset_x / norm, .y = offset_y / norm});
+    }
+
+    return points;
+}
+
+
+
 void points_on_hull(Point_array* points, Point* p, Point* q){
 
     Point max;

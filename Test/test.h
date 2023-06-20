@@ -135,7 +135,7 @@ void test_combinehull();
     tests parallel quickhull
 */
 void test_quickhull();
-
+void test_quickhull_on_circle();
 
 /*
     tests parallel quickhull using thrust library

@@ -56,6 +56,8 @@ void workload_calc(size_t* grid_size, size_t* rem_grid_size, size_t* loop_cnt, s
 
 Point_array_par* generate_random_points_par(int num_of_points, double l_bound, double u_bound);
 
+Point_array_par* generate_random_points_on_circle_par(int num_of_points);
+
 Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2);
 
 Hull_par* combine_hull_stream_par(Hull_par* hull_1, Hull_par* hull_2, cudaStream_t* streams);
