@@ -128,12 +128,12 @@ void max_distance_stream_cuda(Line* l, Point_array_par* points, Line** l_p_max, 
     int numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
 
     Point* d_points_in;
-    CHECK(cudaMalloc((void**)&d_points_in, size * sizeof(Point)));
+    CHECK(cudaMallocAsync((void**)&d_points_in, size * sizeof(Point), streams[0]));
     CHECK(cudaMemcpyAsync(d_points_in, points->array, size*sizeof(Point), cudaMemcpyDeviceToDevice, streams[0]));
     //d_points_in = points->array;
 
     Point* d_points_out;
-    CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
+    CHECK(cudaMallocAsync((void**)&d_points_out, numBlocks * sizeof(Point), streams[0]));
 
 
     while(size > threadsPerBlock){
@@ -141,25 +141,25 @@ void max_distance_stream_cuda(Line* l, Point_array_par* points, Line** l_p_max, 
         CHECK(cudaMemcpyAsync(d_points_in, d_points_out, numBlocks * sizeof(Point), cudaMemcpyDeviceToDevice, streams[0]));
         size = numBlocks;
         numBlocks = (size + threadsPerBlock - 1)/threadsPerBlock;
-        CHECK(cudaFree(d_points_out));
-        CHECK(cudaMalloc((void**)&d_points_out, numBlocks * sizeof(Point)));
+        CHECK(cudaFreeAsync(d_points_out, streams[0]));
+        CHECK(cudaMallocAsync((void**)&d_points_out, numBlocks * sizeof(Point), streams[0]));
     }
 
     Point* d_max;
-    CHECK(cudaMalloc((void**)&d_max,sizeof(Point)));
+    CHECK(cudaMallocAsync((void**)&d_max,sizeof(Point), streams[0]));
     //deal with the rest
     max_distance_kernel<<<1, threadsPerBlock, 0, streams[0]>>>(l, d_points_in, size,d_max);
 
     // allocate GPU mem at addresses handed over as arguments
-    CHECK(cudaMalloc(l_p_max, sizeof(Line)));
-    CHECK(cudaMalloc(l_max_q, sizeof(Line)));
+    CHECK(cudaMallocAsync(l_p_max, sizeof(Line), streams[0]));
+    CHECK(cudaMallocAsync(l_max_q, sizeof(Line), streams[0]));
     
     // assign lines
     assign_max_lines_par<<<1, 1, 0, streams[0]>>>(l, *l_p_max, *l_max_q, d_max);
 
-    CHECK(cudaFree(d_max));
-    CHECK(cudaFree(d_points_in));
-    CHECK(cudaFree(d_points_out));
+    CHECK(cudaFreeAsync(d_max, streams[0]));
+    CHECK(cudaFreeAsync(d_points_in, streams[0]));
+    CHECK(cudaFreeAsync(d_points_out, streams[0]));
 }
 
 

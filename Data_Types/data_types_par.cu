@@ -119,6 +119,19 @@ void free_point_array_par_gpu(Point_array_par* points){
 }
 
 
+void free_point_array_stream_par_gpu(Point_array_par* points, cudaStream_t stream){
+    if(!points){
+        return;
+    }
+
+    if(points->array){
+        CHECK(cudaFreeAsync(points->array, stream));
+    }
+    CHECK(cudaFreeHost(points));
+
+}
+
+
 
 Hull_par* init_hull_par(size_t size){
     
@@ -228,9 +241,47 @@ void free_hull_par_gpu(Hull_par* hull){
 }
 
 
+void free_hull_stream_par_gpu(Hull_par* hull, cudaStream_t stream){
+    if(!hull){
+        return;
+    }
+
+    if(hull->array){
+        CHECK(cudaFreeAsync(hull->array, stream));
+    }
+    CHECK(cudaFreeHost(hull));
+
+}
+
+
 
 void free_line_par_gpu(Line* l){
     if(l){
         CHECK(cudaFree(l));
     }
+}
+
+
+void free_line_stream_par_gpu(Line* l, cudaStream_t stream){
+    if(l){
+        CHECK(cudaFreeAsync(l, stream));
+    }
+}
+
+
+
+void print_point_array_par(Point_array_par* points){
+    fprintf(stdout, "Data: ");
+
+    if(points->size == 0){
+        printf("\n");
+        fflush(stdout);
+        return;
+    }
+
+    for(int i = 0; i < points->size-1; i++){
+        fprintf(stdout, "(%lf,%lf), ", points->array[i].x, points->array[i].y);
+    }
+    fprintf(stdout, "(%lf,%lf)", points->array[points->size-1].x, points->array[points->size-1].y);
+    fflush(stdout);
 }

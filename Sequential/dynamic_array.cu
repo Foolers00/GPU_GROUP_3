@@ -60,13 +60,7 @@ Hull* combine_hull(Hull* hull_1, Hull* hull_2){
     Hull* new_hull = (Hull*)malloc(sizeof(Hull));
 
     new_hull->curr_size = hull_1->curr_size+hull_2->curr_size;
-
-    if(hull_1->max_size >= hull_2->max_size){
-        new_hull->max_size = hull_1->max_size<<2;
-    }
-    else{
-        new_hull->max_size = hull_2->max_size<<2;
-    }
+    new_hull->max_size = new_hull->curr_size*2;
 
     new_hull->array = (Line*)malloc(new_hull->max_size*sizeof(Line));
 
@@ -95,6 +89,13 @@ void free_hull(Hull* hull){
 
 void print_point_array(Point_array* points){
     fprintf(stdout, "Data: ");
+
+    if(points->curr_size == 0){
+        printf("\n");
+        fflush(stdout);
+        return;
+    }
+
     for(int i = 0; i < points->curr_size-1; i++){
         fprintf(stdout, "(%lf,%lf), ", points->array[i].x, points->array[i].y);
     }

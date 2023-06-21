@@ -138,13 +138,28 @@ void test_new_quickhull(){
     double new_avg = 0;
     int iterations = 1; 
 
-    int size = 100000000;
+    int size = 1000000;
     int l_bound = 0;
     int u_bound = 10000;
 
     bool state = true;
 
-    points = generate_random_points(size, l_bound, u_bound);
+    //points = generate_random_points(size, l_bound, u_bound);
+    points = generate_random_points_on_circle(size);
+
+    // points = init_point_array(20);
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.707107, .y = 0.707107});
+    // add_to_point_array(points, (Point) { .x = 0.000000, .y = 1.000000});
+    // add_to_point_array(points, (Point) { .x = 0.707107, .y = 0.707107});
+    // add_to_point_array(points, (Point) { .x = 1.000000, .y = 0.000000});
+    // add_to_point_array(points, (Point) { .x = 0.707107, .y = 0.707107});
+
+    //print_point_array(points);
 
     for(int i = 0; i < iterations; i++){
         tic = clock();
@@ -184,4 +199,46 @@ void test_new_quickhull(){
        printf("Comparison Failed\n"); 
     }
 
+}
+
+
+
+
+Point_array* generate_random_points_on_circle(int num_of_points){
+
+    time_t t;
+    double radius = 1.0;
+    srand((unsigned) time(&t));
+
+    Point_array* points = init_point_array(num_of_points * 2);
+    for(size_t i = 0; i < num_of_points; i++){     
+        while(true){   
+            double angle = ((double)rand() / RAND_MAX) * 2 * 3.14159265359;
+            Point p;
+            p.x = radius * cos(angle);
+            p.y = radius * sin(angle);
+            if(!find_point_array(points, p)){
+                add_to_point_array(points, p);
+                break;
+            }
+        }
+    }
+
+    printf("Point Generation finished\n");
+
+    return points;
+}
+
+
+bool find_point_array(Point_array* points, Point p){
+    bool found = false;
+    
+    for(int i = 0; i < points->curr_size; i++){
+        found = compare_points(points->array[i], p);
+        if(found){
+            break;
+        }
+    }
+
+    return found;
 }

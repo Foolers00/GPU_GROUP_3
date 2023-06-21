@@ -648,16 +648,15 @@ void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fs
 
     ///////////////////////////
     // memory set up
-    CHECK(cudaMalloc((size_t **)&t_data, array_fbytes));
+    CHECK(cudaMallocAsync((size_t **)&t_data, array_fbytes, stream));
 
 
-    CHECK(cudaMalloc((size_t **)&aux_data, aux_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_2_data, aux_2_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_3_data, aux_3_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_4_data, aux_4_fbytes));
-    CHECK(cudaMalloc((size_t **)&aux_5_data, aux_5_fbytes));
+    CHECK(cudaMallocAsync((size_t **)&aux_data, aux_fbytes, stream));
+    CHECK(cudaMallocAsync((size_t **)&aux_2_data, aux_2_fbytes, stream));
+    CHECK(cudaMallocAsync((size_t **)&aux_3_data, aux_3_fbytes, stream));
+    CHECK(cudaMallocAsync((size_t **)&aux_4_data, aux_4_fbytes, stream));
+    CHECK(cudaMallocAsync((size_t **)&aux_5_data, aux_5_fbytes, stream));
 
-    
 
     ///////////////////////////
     // prefix scan
@@ -777,13 +776,13 @@ void master_stream_prescan_gpu(size_t* o_array, size_t* i_array, size_t array_fs
     }
 
     // free memory
-    CHECK(cudaFree(t_data));
+    CHECK(cudaFreeAsync(t_data, stream));
 
 
-    CHECK(cudaFree(aux_data));
-    CHECK(cudaFree(aux_2_data));
-    CHECK(cudaFree(aux_3_data));
-    CHECK(cudaFree(aux_4_data));
+    CHECK(cudaFreeAsync(aux_data, stream));
+    CHECK(cudaFreeAsync(aux_2_data, stream));
+    CHECK(cudaFreeAsync(aux_3_data, stream));
+    CHECK(cudaFreeAsync(aux_4_data, stream));
 
 
 }

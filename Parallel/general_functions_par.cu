@@ -31,6 +31,7 @@ Hull_par* quickhull_par(Point_array_par* points){
     Hull_par* hull_result_cpu = NULL;
 
     // above below array var
+    Point_array_par* points_gpu;
     Point_array_par* points_above;
     Point_array_par* points_below;
 
@@ -39,12 +40,61 @@ Hull_par* quickhull_par(Point_array_par* points){
     points_above = init_point_array_par_gpu(0);
     points_below = init_point_array_par_gpu(0);
 
+    // transfer points
+    #if MEMORY_MODEL == ZERO_MEMORY
+        points_gpu = init_point_array_par_gpu(0);
+        points_gpu->size = points->size;
+        CHECK(cudaHostGetDevicePointer((void **)&points_gpu->array, (void *)points->array, 0));
+    #else
+        points_gpu = init_point_array_par_gpu(points->size);
+        CHECK(cudaMemcpy(points_gpu->array, points->array, points->size*sizeof(Point), cudaMemcpyHostToDevice));
+    #endif
+
+
+
     // find points on hull
-    points_on_hull_par(points, &l_pq);
+    points_on_hull_par(points_gpu, &l_pq);
     //l_pq = (Line) { .p = p, .q = q };
 
+    // Line* l_pq_h = (Line*)malloc(sizeof(Line));
+    // CHECK(cudaMemcpy(l_pq_h, l_pq, sizeof(Line), cudaMemcpyDeviceToHost));
+    // printf("Line: (%f-%f)-(%f-%f)\n", l_pq_h->p.x, l_pq_h->p.y, l_pq_h->q.x, l_pq_h->q.y);
+
+
     // splits array into above and below
-    split_point_array(points, points_above, points_below, l_pq);
+    split_point_array(points_gpu, points_above, points_below, l_pq);
+
+    // free memory
+    #if MEMORY_MODEL != ZERO_MEMORY
+        free_point_array_par_gpu(points_gpu);
+    #endif
+
+
+    // Point_array_par points_above_h, points_below_h;
+    // points_above_h.array = (Point*)malloc(points_above->size*sizeof(Point));
+    // points_below_h.array = (Point*)malloc(points_below->size*sizeof(Point));
+    // points_above_h.size = points_above->size;
+    // points_below_h.size = points_below->size;
+
+    // printf("size above: %lu\n", points_above->size);
+    // printf("size below: %lu\n", points_below->size); 
+
+    // printf("size above: %lu\n", points_above_h.size);
+    // printf("size below: %lu\n", points_below_h.size); 
+
+    // CHECK(cudaMemcpy(points_above_h.array, points_above->array, points_above->size*sizeof(Point), cudaMemcpyDeviceToHost));
+    // CHECK(cudaMemcpy(points_below_h.array, points_below->array, points_below->size*sizeof(Point), cudaMemcpyDeviceToHost));
+
+    // printf("size above: %lu\n", points_above->size);
+    // printf("size below: %lu\n", points_below->size); 
+
+    // printf("size above: %lu\n", points_above_h.size);
+    // printf("size below: %lu\n", points_below_h.size); 
+    
+    // print_point_array_par(&points_above_h);
+    // print_point_array_par(&points_below_h);
+
+    
     
 
     // recursive call
@@ -185,20 +235,47 @@ void workload_calc(size_t* grid_size, size_t* rem_grid_size, size_t* loop_cnt, s
 }
 
 
-Point_array_par* generate_random_points_par(int num_of_points, double l_bound, double u_bound){
+Point_array_par* generate_random_points_par(size_t num_of_points, double l_bound, double u_bound){
 
     time_t t;
     double difference = u_bound - l_bound;
     double offset_x = 0;
     double offset_y = 0;
+    Point p;
+
     srand((unsigned) time(&t));
 
     Point_array_par* points = init_point_array_par(num_of_points);
     for(size_t i = 0; i < num_of_points; i++){
-        offset_x = rand() % (int)difference;
-        offset_y = rand() % (int)difference;
-        points->array[i] = (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y};
+        offset_x = ((double)rand()/RAND_MAX)*difference;
+        offset_y = ((double)rand()/RAND_MAX)*difference;
+        p = (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y};
+        points->array[i] = p;
     }
+
+    printf("Random Point Generation finished\n");
+
+    return points;
+}
+
+
+Point_array_par* generate_random_points_on_circle_par(size_t num_of_points, double radius){
+
+    time_t t;
+    double angle;
+    Point p;
+
+    srand((unsigned) time(&t));
+
+    Point_array_par* points = init_point_array_par(num_of_points);
+    for(size_t i = 0; i < num_of_points; i++){      
+        angle = ((double)rand() / RAND_MAX) * 2 * M_PI;
+        p.x = radius * cos(angle);
+        p.y = radius * sin(angle);
+        points->array[i] = p;
+    }
+
+    printf("Random Point Generation on Circle finished\n");
 
     return points;
 }
@@ -266,6 +343,7 @@ Hull_par* quickhull_stream_par(Point_array_par* points){
     Hull_par* hull_result_cpu = NULL;
 
     // above below array var
+    Point_array_par* points_gpu;
     Point_array_par* points_above;
     Point_array_par* points_below;
 
@@ -273,8 +351,19 @@ Hull_par* quickhull_stream_par(Point_array_par* points){
     cudaStream_t streams[4];
 
     // set memory
+    points_gpu = init_point_array_par_gpu(points->size);
     points_above = init_point_array_par_gpu(0);
     points_below = init_point_array_par_gpu(0);
+
+    // transfer points
+    #if MEMORY_MODEL == ZERO_MEMORY
+        points_gpu = init_point_array_par_gpu(0);
+        points_gpu->size = points->size;
+        CHECK(cudaHostGetDevicePointer((void **)&points_gpu->array, (void *)points->array, 0));
+    #else
+        points_gpu = init_point_array_par_gpu(points->size);
+        CHECK(cudaMemcpy(points_gpu->array, points->array, points->size*sizeof(Point), cudaMemcpyHostToDevice));
+    #endif
 
 
     // init streams
@@ -285,16 +374,37 @@ Hull_par* quickhull_stream_par(Point_array_par* points){
 
 
     // find points on hull
-    points_on_hull_stream_par(points, &l_pq, streams);
+    points_on_hull_stream_par(points_gpu, &l_pq, streams);
     //l_pq = (Line) { .p = p, .q = q };
 
     // splits array into above and below
-    split_stream_point_array(points, points_above, points_below, l_pq, streams);
+    split_stream_point_array(points_gpu, points_above, points_below, l_pq, streams);
+
+    // free memory
+    #if MEMORY_MODEL != ZERO_MEMORY
+        free_point_array_stream_par_gpu(points_gpu, streams[1]);
+    #endif
     
 
     // recursive call
-    hull_up = first_quickhull_stream_split_par(points_above, l_pq, ABOVE, &streams[0]);
-    hull_down = first_quickhull_stream_split_par(points_below, l_pq, BELOW, &streams[2]);
+    #pragma omp parallel num_threads(2)
+    {
+        #pragma omp single
+        {
+            #pragma omp task
+            {
+                hull_up = first_quickhull_stream_split_par(points_above, l_pq, ABOVE, &streams[0]);
+            }
+
+            #pragma omp task
+            {
+                hull_down = first_quickhull_stream_split_par(points_below, l_pq, BELOW, &streams[2]);
+            }
+        }
+    }
+
+    // Sync
+    cudaDeviceSynchronize();
 
     // combine
     hull_result_gpu = combine_hull_stream_par(hull_up, hull_down, streams);
@@ -320,7 +430,6 @@ Hull_par* quickhull_stream_par(Point_array_par* points){
 }
 
 Hull_par* first_quickhull_stream_split_par(Point_array_par* points, Line* l, int side, cudaStream_t* streams){
-
 
     // vars
     Point_array_par* points_side = NULL;
@@ -357,8 +466,8 @@ Hull_par* first_quickhull_stream_split_par(Point_array_par* points, Line* l, int
     }
 
     // free memory
-    free_line_par_gpu(l_p_max);
-    free_line_par_gpu(l_max_q);
+    free_line_stream_par_gpu(l_p_max, streams[0]);
+    free_line_stream_par_gpu(l_max_q, streams[1]);
 
     return hull_side;
 
@@ -403,9 +512,9 @@ Hull_par* quickhull_stream_split_par(Point_array_par* points, Line* l, int side,
     }
 
     // free memory
-    free_line_par_gpu(l_p_max);
-    free_line_par_gpu(l_max_q);
-    free_point_array_par_gpu(points_side);
+    free_line_stream_par_gpu(l_p_max, streams[0]);
+    free_line_stream_par_gpu(l_max_q, streams[1]);
+    free_point_array_stream_par_gpu(points_side, streams[0]);
 
     return hull_side;
 
@@ -443,8 +552,8 @@ Hull_par* combine_hull_stream_par(Hull_par* hull_1, Hull_par* hull_2, cudaStream
     CHECK(cudaMemcpyAsync(hull_3->array+hull_1->size, hull_2->array, hull_2_bytes, cudaMemcpyDeviceToDevice, streams[1]));
 
     // free memory
-    free_hull_par_gpu(hull_1);
-    free_hull_par_gpu(hull_2);
+    free_hull_stream_par_gpu(hull_1, streams[0]);
+    free_hull_stream_par_gpu(hull_2, streams[1]);
 
     return hull_3;
 

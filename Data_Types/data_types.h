@@ -27,6 +27,8 @@
 #define OP_MIN 0
 #define OP_MAX 1
 
+#define ZERO_PRECISION 10e-10
+
 
 
 

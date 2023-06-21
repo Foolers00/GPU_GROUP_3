@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 NVCC=nvcc
-CUDAFLAGS= -std=c++14 -O2 -lineinfo
+CUDAFLAGS= -std=c++14 -O2 -lineinfo  -Xcompiler -fopenmp
 
 all: prog.out
 

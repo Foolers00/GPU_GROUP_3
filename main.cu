@@ -29,11 +29,11 @@ int main(){
 
     //test_combinehull();
 
-    //test_quickhull();
+    test_quickhull();
 
     //test_thrust_quickhull();
 
-    test_quickhull_performance();
+    //test_quickhull_performance();
 
     return 0;
 }
