@@ -1351,8 +1351,8 @@ void test_quickhull_performance(){
 
     // set vars
     size = 10000000;
-    l_bound = -1;
-    u_bound = 1;
+    l_bound = -1000;
+    u_bound = 1000;
 
     cpu_time_avg = 0;
     gpu_time_avg = 0;
@@ -1445,8 +1445,8 @@ void test_quickhull_performance(size_t size, FILE* output_file){
 
 
     // set vars
-    l_bound = -1;
-    u_bound = 1;
+    l_bound = -1000;
+    u_bound = 1000;
 
     cpu_time_avg = 0;
     gpu_time_avg = 0;
@@ -1637,32 +1637,21 @@ Hull* generate_random_lines(int num_of_lines, double l_bound, double u_bound){
 
 void test_memory_model() {
 
-    // // Set up different memory models to test
-    // int memory_models[] = {STD_MEMORY, PINNED_MEMORY, ZERO_MEMORY};
-    // int num_models = sizeof(memory_models) / sizeof(memory_models[0]);
-
+    
     // Print the value of BLOCKSIZE
     std::cout << "BLOCKSIZE: " << BLOCKSIZE << std::endl;
 
     // Define the maximum input size
-    int max_input_size = 1000000;
+    int max_input_size = 10000000;
 
     std::string fileSuffix = "_" + std::to_string(MEMORY_MODEL) + "_" + std::to_string(BLOCKSIZE);
-    std::string fileName = "test_memory_output" + fileSuffix + ".txt";
+    std::string fileName = "benchmark_memory_blocksize_output" + fileSuffix + ".txt";
     
     FILE* output_file = fopen(fileName.c_str(), "w");    
     if (output_file == NULL) {
         printf("Error opening output file.\n");
         return;
     }
-
-    // for (int i = 0; i < num_models; i++) {
-    //     // Set MEMORY_MODEL to current memory model
-    //     #undef MEMORY_MODEL
-    //     #define MEMORY_MODEL memory_models[i]
-
-    //     // Perform testing with current memory model
-    //     printf("Testing with MEMORY_MODEL: %d\n", MEMORY_MODEL);
 
     for (int size = 10; size <= max_input_size; size *= 10) {
         printf("Testing with input size: %d\n", size);
