@@ -1080,7 +1080,7 @@ void test_quickhull_on_circle(){
     //writePointArrayToCSV(points_cpu);
 
     tic = clock();
-    // hull_cpu = quickhull(points_cpu);
+    hull_cpu = quickhull(points_cpu);
     toc = clock();
     cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
