@@ -28,8 +28,9 @@
 #define PINNED_MEMORY 2
 #define ZERO_MEMORY 3
 
-// #define MEMORY_MODEL PINNED_MEMORY
-
+#ifndef MEMORY_MODEL
+#define MEMORY_MODEL PINNED_MEMORY
+#endif
 
 
 #define CHECK(call)                                                \
