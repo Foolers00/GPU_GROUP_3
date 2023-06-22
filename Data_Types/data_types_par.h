@@ -15,7 +15,9 @@
 #endif
 
 #define MAX_BLOCK_COUNT 2147483647
-//#define BLOCKSIZE 1024
+#ifndef BLOCKSIZE
+#define BLOCKSIZE 1024
+#endif
 
 #define MAX_BLOCK_COUNT_SHIFT MAX_BLOCK_COUNT*2*BLOCKSIZE
 #define INCLUSIVE 1
@@ -26,7 +28,9 @@
 #define PINNED_MEMORY 2
 #define ZERO_MEMORY 3
 
+#ifndef MEMORY_MODEL
 #define MEMORY_MODEL PINNED_MEMORY
+#endif
 
 
 
