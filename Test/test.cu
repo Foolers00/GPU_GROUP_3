@@ -8,8 +8,6 @@
 #endif
 
 
-
-
 Point_array* test_sequence_4_1(){
 
     Point_array* points = NULL;
@@ -1514,10 +1512,11 @@ void test_memory_model() {
     std::cout << "BLOCKSIZE: " << BLOCKSIZE << std::endl;
 
     // Define the maximum input size
-    int max_input_size = 1000000;
+    int max_input_size = 10000000;
 
+    std::string directoryPath = "test_output/memory_blocksize";
     std::string fileSuffix = "_" + std::to_string(MEMORY_MODEL) + "_" + std::to_string(BLOCKSIZE);
-    std::string fileName = "test_memory_output" + fileSuffix + ".txt";
+    std::string fileName = directoryPath + "/output" + fileSuffix + ".txt";
     
     FILE* output_file = fopen(fileName.c_str(), "w");    
     if (output_file == NULL) {
