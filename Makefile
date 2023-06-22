@@ -1,7 +1,10 @@
 .PHONY: all clean
 
+BLOCKSIZE ?= 1024
+# Run with make BLOCKSIZE=N
+
 NVCC=nvcc
-CUDAFLAGS= -std=c++14 -O2 -lineinfo
+CUDAFLAGS= -std=c++14 -O2 -lineinfo -DBLOCKSIZE=$(BLOCKSIZE)
 
 all: prog.out
 

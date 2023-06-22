@@ -29,26 +29,26 @@ int main(){
 
     //test_combinehull();
 
-    //test_quickhull();
+    test_quickhull();
 
     //test_thrust_quickhull();
     
     // test_quickhull_performance();
 
-    test_memory_model();
+    //test_memory_model();
 
     // Print the value of MEMORY_MODEL
-    #ifdef MEMORY_MODEL
-    printf("MEMORY_MODEL: %d\n", MEMORY_MODEL);
-    #else
-    printf("MEMORY_MODEL is not defined\n");
-    #endif
+    //#ifdef MEMORY_MODEL
+    //printf("MEMORY_MODEL: %d\n", MEMORY_MODEL);
+    //#else
+    //printf("MEMORY_MODEL is not defined\n");
+    //#endif
 
-    #ifdef SET_MEMORY_MODEL
-    printf("SET_MEMORY_MODEL: %d\n", SET_MEMORY_MODEL);
-    #else
-    printf("SET_MEMORY_MODEL is not defined\n");
-    #endif
+    //#ifdef SET_MEMORY_MODEL
+    //printf("SET_MEMORY_MODEL: %d\n", SET_MEMORY_MODEL);
+    //#else
+    //printf("SET_MEMORY_MODEL is not defined\n");
+    //#endif
 
     // Print the value of BLOCKSIZE
     std::cout << "BLOCKSIZE: " << BLOCKSIZE << std::endl;
