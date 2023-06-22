@@ -927,19 +927,22 @@ void test_quickhull(){
 
 
     // set vars
-    size = 10000000;
+    size = 100000000;
     l_bound = -10000000;
     u_bound = 10000000;
 
     
     points_cpu = init_point_array(2*size);
     points_gpu = generate_random_points_par(size, l_bound, u_bound);
+    //points_gpu = generate_random_points_on_circle_par(size, 10);
 
-    //readPointsFromCSV("points_mistake_1", &points_gpu);
+    //readPointsFromCSV("points", &points_gpu);
 
 
     memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
     points_cpu->curr_size = size;
+
+    //print_point_array(points_cpu);
 
     //writePointArrayToCSV(points_cpu);
 
@@ -948,12 +951,16 @@ void test_quickhull(){
     toc = clock();
     cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
 
+    printf("CPU Finished\n");
+
     //writeHullArrayToCSV(hull_cpu);
 
     tic = clock();
-    hull_gpu = quickhull_par(points_gpu);
+    hull_gpu = quickhull_stream_par(points_gpu);
     toc = clock();
     gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+    printf("GPU Finished\n");
 
     //writeHullparArrayToCSV(hull_gpu);
 
@@ -1217,19 +1224,20 @@ void test_quickhull_performance(){
 
 
     // set vars
-    size = 10000000;
-    l_bound = -1;
-    u_bound = 1;
+    size = 100000;
+    l_bound = INT_MIN;
+    u_bound = INT_MAX;
 
     cpu_time_avg = 0;
     gpu_time_avg = 0;
     thrust_gpu_time_avg = 0;
     iterations = 0;
 
-    while(iterations < 100){
+    while(iterations < 3){
 
         points_cpu = init_point_array(2*size);
-        points_gpu = generate_random_points_par(size, l_bound, u_bound);
+        //points_gpu = generate_random_points_par(size, l_bound, u_bound);
+        points_gpu = generate_random_points_on_circle_par(size, 1000);
 
 
         memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
@@ -1253,6 +1261,8 @@ void test_quickhull_performance(){
         thrust_quickhull(points_gpu, hull_gpu_vec);
         toc = clock();
         thrust_gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        printf("CPU Size: %lu, GPU Size: %lu, Thrust Size: %lu\n", hull_cpu->curr_size, hull_gpu->size, hull_gpu_vec.size());
 
 
         // free memory

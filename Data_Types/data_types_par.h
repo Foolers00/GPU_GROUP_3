@@ -76,6 +76,8 @@ void free_point_array_par(Point_array_par* points);
 
 void free_point_array_par_gpu(Point_array_par* points);
 
+void free_point_array_stream_par_gpu(Point_array_par* points, cudaStream_t stream);
+
 Hull_par* init_hull_par(size_t size);
 
 Hull_par* init_hull_par_gpu(size_t size);
@@ -84,4 +86,10 @@ void free_hull_par(Hull_par* hull);
 
 void free_hull_par_gpu(Hull_par* hull);
 
+void free_hull_stream_par_gpu(Hull_par* hull, cudaStream_t stream);
+
 void free_line_par_gpu(Line* l);
+
+void free_line_stream_par_gpu(Line* l, cudaStream_t stream);
+
+void print_point_array_par(Point_array_par* points);

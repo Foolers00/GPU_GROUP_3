@@ -82,12 +82,12 @@ __device__ void check_point_location_thrust(Line l, Point z, int* result){
 
     cross_product_thrust(v1, v2, &cross_result);
 
+    if(fabsf(cross_result) < ZERO_PRECISION){
+        *result = ON;
+        return;
+    } 
     if(cross_result>0){
         *result = ABOVE;
-        return;
-    }
-    if(cross_result == 0){
-        *result = ON;
         return;
     }
     *result = BELOW;

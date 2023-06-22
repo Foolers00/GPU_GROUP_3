@@ -51,3 +51,8 @@ Point_array* test_sequence_4_1();
 Hull* test_sequence_4_2(Point_array* points);
 
 void test_new_quickhull();
+
+
+Point_array* generate_random_points_on_circle(int num_of_points);
+
+bool find_point_array(Point_array* points, Point p);

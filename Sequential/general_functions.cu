@@ -8,6 +8,7 @@
 #include "general_functions.h"
 #endif
 
+
 Hull* quickhull(Point_array* points){
 
     Point p;
@@ -46,6 +47,7 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         }
     }
 
+
     max_point = max_distance(l, points_side);
     l_p_max = (Line) { .p = l.p, .q = max_point };
     l_max_q = (Line) { .p = max_point, .q = l.q };
@@ -63,8 +65,11 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
                 quickhull_split(points_side, l_p_max, side),
                 quickhull_split(points_side, l_max_q, side)
         );
+
     }
+    
     free_point_array(points_side);
+
     return hull_side;
 
 }
@@ -86,31 +91,58 @@ int check_point_location(Line l, Point z){
 
     double result = cross_product(init_vector(l.p, l.q), init_vector(l.p, z));
 
+    if(fabs(result) < ZERO_PRECISION){
+        return ON;
+    }    
     if(result>0){
         return ABOVE;
-    }
-    if(result == 0){
-        return ON;
     }
     return BELOW;
 
 }
 
 
-Point_array* generate_random_points(int num_of_points, double l_bound, double u_bound){
+Point_array* generate_random_points(size_t num_of_points, double l_bound, double u_bound){
 
     time_t t;
     double difference = u_bound - l_bound;
     double offset_x = 0;
     double offset_y = 0;
+    Point p;
+
     srand((unsigned) time(&t));
 
     Point_array* points = init_point_array(num_of_points * 2);
     for(size_t i = 0; i < num_of_points; i++){
-        offset_x = rand() % (int)difference;
-        offset_y = rand() % (int)difference;
-        add_to_point_array(points, (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y});
+        offset_x = ((double)rand()/RAND_MAX)*difference;
+        offset_y = ((double)rand()/RAND_MAX)*difference;
+        p = (Point) {.x = l_bound + offset_x, .y = l_bound + offset_y};
+        add_to_point_array(points, p);        
     }
+
+    printf("Random Point Generation finished\n");
+
+    return points;
+}
+
+
+Point_array* generate_random_points_on_circle(size_t num_of_points, double radius){
+
+    time_t t;
+    double angle;
+    Point p;
+
+    srand((unsigned) time(&t));
+
+    Point_array* points = init_point_array(num_of_points * 2);
+    for(size_t i = 0; i < num_of_points; i++){      
+        angle = ((double)rand() / RAND_MAX) * 2 * M_PI;
+        p.x = radius * cos(angle);
+        p.y = radius * sin(angle);
+        add_to_point_array(points, p);
+    }
+
+    printf("Random Point Generation on Circle finished\n");
 
     return points;
 }
@@ -121,7 +153,7 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
     Point max;
     Point min;
 
-    max.x = 0;
+    max.x = -DBL_MAX;
     min.x = DBL_MAX;
 
     for(int i = 0; i < points->curr_size; i++){

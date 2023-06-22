@@ -22,7 +22,7 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
 
 
     // memory var
-    Point* points_gpu;
+    Point* points_gpu; 
     Point* temp_above;
     Point* temp_below;  
     size_t* above_bits;
@@ -37,18 +37,16 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
     point_bytes = points->size*sizeof(Point);
 
     // set up memory
-    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes));
+    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes)); 
     CHECK(cudaMalloc((size_t **)&above_bits, array_fbytes));
     CHECK(cudaMalloc((size_t **)&below_bits, array_fbytes));
     CHECK(cudaMalloc((size_t **)&above_index, array_fbytes+sizeof(size_t)));
     CHECK(cudaMalloc((size_t **)&below_index, array_fbytes+sizeof(size_t)));
 
+   
     // transfer point array and workload
-    #if MEMORY_MODEL == ZERO_MEMORY
-        CHECK(cudaHostGetDevicePointer((void **)&points_gpu, (void *)points->array, 0));
-    #else
-        CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyHostToDevice));
-    #endif
+    CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyDeviceToDevice));
+
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
     for(int i = 0; i < array_loop_cnt; i++){
@@ -57,6 +55,14 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
     if(array_rem_grid_size > 0){
         setbits<<<array_grid_size, BLOCKSIZE>>>(above_bits, below_bits, points_gpu, l, points->size, array_loop_cnt);  
     }
+
+    // size_t above_bits_h[array_fsize];
+    // CHECK(cudaMemcpy(above_bits_h, above_bits, array_fbytes, cudaMemcpyDeviceToHost));
+    // printf("Above bits:");
+    // for(int i = 0; i < array_fsize; i++){
+    //     printf("%lu, ", above_bits_h[i]);
+    // }
+
 
     // prefix bits to get indexes
     master_prescan_gpu(above_index, above_bits, array_fsize, array_fbytes, 
@@ -101,9 +107,7 @@ void split_point_array(Point_array_par* points, Point_array_par* points_above,
 
 
     // free memory
-    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
-        CHECK(cudaFree(points_gpu));
-    #endif
+    CHECK(cudaFree(points_gpu));
     CHECK(cudaFree(above_bits));
     CHECK(cudaFree(below_bits));
     CHECK(cudaFree(above_index));
@@ -349,20 +353,19 @@ void split_stream_point_array(Point_array_par* points, Point_array_par* points_a
     point_bytes = points->size*sizeof(Point);
 
     // set up memory
-    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes));
-    CHECK(cudaMalloc((size_t **)&above_bits, array_fbytes));
-    CHECK(cudaMalloc((size_t **)&below_bits, array_fbytes));
-    CHECK(cudaMalloc((size_t **)&above_index, array_fbytes+sizeof(size_t)));
-    CHECK(cudaMalloc((size_t **)&below_index, array_fbytes+sizeof(size_t)));
+    CHECK(cudaMallocAsync((Point **)&points_gpu, point_fbytes, streams[0]));
+    CHECK(cudaMallocAsync((size_t **)&above_bits, array_fbytes, streams[1]));
+    CHECK(cudaMallocAsync((size_t **)&below_bits, array_fbytes, streams[1]));
+    CHECK(cudaMallocAsync((size_t **)&above_index, array_fbytes+sizeof(size_t), streams[1]));
+    CHECK(cudaMallocAsync((size_t **)&below_index, array_fbytes+sizeof(size_t), streams[1]));
 
     // transfer point array and workload
-    #if MEMORY_MODEL == ZERO_MEMORY
-        CHECK(cudaHostGetDevicePointer((void **)&points_gpu, (void *)points->array, 0));
-    #else
-        CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyHostToDevice));
-    #endif
+    CHECK(cudaMemcpyAsync(points_gpu, points->array, point_bytes, cudaMemcpyDeviceToDevice, streams[0]));
 
-    
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
+
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
     for(int i = 0; i < array_loop_cnt; i++){
@@ -372,50 +375,95 @@ void split_stream_point_array(Point_array_par* points, Point_array_par* points_a
         setbits<<<array_grid_size, BLOCKSIZE, 0, streams[0]>>>(above_bits, below_bits, points_gpu, l, points->size, array_loop_cnt);  
     }
 
-    // prefix bits to get indexes
-    master_stream_prescan_gpu(above_index, above_bits, array_fsize, array_fbytes, 
-                        array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE, streams[0]);
 
-    master_stream_prescan_gpu(below_index, below_bits, array_fsize, array_fbytes, 
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+
+    // prefix bits to get indexes
+    #pragma omp parallel num_threads(2)
+    {
+        #pragma omp single
+        {
+            #pragma omp task
+            {
+                master_stream_prescan_gpu(above_index, above_bits, array_fsize, array_fbytes, 
+                        array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE, streams[0]);
+            }
+
+            #pragma omp task
+            {
+                master_stream_prescan_gpu(below_index, below_bits, array_fsize, array_fbytes, 
                         array_grid_size, array_rem_grid_size, array_loop_cnt, EXCLUSIVE, streams[1]);
+            }
+
+        }
+    }
+    
+    
 
     
     // set up memory for output point arrays
     
-    CHECK(cudaMalloc((Point **)&temp_above, point_fbytes));
-    CHECK(cudaMalloc((Point **)&temp_below, point_fbytes));
+    CHECK(cudaMallocAsync((Point **)&temp_above, point_fbytes, streams[0]));
+    CHECK(cudaMallocAsync((Point **)&temp_below, point_fbytes, streams[1]));
 
-    // move values
-    for(int i = 0; i < array_loop_cnt; i++){
-        movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[0]>>>(temp_above, points_gpu, above_bits, 
-                                                above_index, array_fsize, points->size, i);
-        movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[1]>>>(temp_below, points_gpu, below_bits, 
-                                                below_index, array_fsize,  points->size, i);
+
+
+    #pragma omp parallel num_threads(2)
+    {
+        #pragma omp single
+        {
+            #pragma omp task
+            {
+                // move values
+                for(int i = 0; i < array_loop_cnt; i++){
+                    movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[0]>>>(temp_above, points_gpu, above_bits, 
+                                                            above_index, array_fsize, points->size, i);
+                }
+                if(array_rem_grid_size > 0){
+                    movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[0]>>>(temp_above, points_gpu, above_bits, 
+                                                            above_index, array_fsize, points->size, array_loop_cnt);
+                }
+                // copy size and values back
+                points_above->array = temp_above;
+                CHECK(cudaMemcpyAsync(&points_above->size, above_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost, streams[0]));
+            }
+
+
+            #pragma omp task
+            {
+                // move values
+                for(int i = 0; i < array_loop_cnt; i++){
+                    movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[1]>>>(temp_below, points_gpu, below_bits, 
+                                                            below_index, array_fsize,  points->size, i);
+                }
+                if(array_rem_grid_size > 0){
+                    movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[1]>>>(temp_below, points_gpu, below_bits, 
+                                                            below_index, array_fsize, points->size, array_loop_cnt); 
+                }
+                // copy size and values back
+                points_below->array = temp_below;
+                CHECK(cudaMemcpyAsync(&points_below->size, below_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost, streams[1]));
+            }
+        }
     }
-    if(array_rem_grid_size > 0){
-        movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[0]>>>(temp_above, points_gpu, above_bits, 
-                                                above_index, array_fsize, points->size, array_loop_cnt);
-        movevalues<<<array_grid_size, BLOCKSIZE, 0, streams[1]>>>(temp_below, points_gpu, below_bits, 
-                                                below_index, array_fsize, points->size, array_loop_cnt); 
-    }
-
-    // copy size and values back
-    points_above->array = temp_above;
-    CHECK(cudaMemcpyAsync(&points_above->size, above_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost, streams[0]));
-
-    points_below->array = temp_below;
-    CHECK(cudaMemcpyAsync(&points_below->size, below_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost, streams[1]));
 
 
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
+            
 
     // free memory
-    #if MEMORY_MODEL == STD_MEMORY || MEMORY_MODEL == PINNED_MEMORY
-        CHECK(cudaFree(points_gpu));
-    #endif
-    CHECK(cudaFree(above_bits));
-    CHECK(cudaFree(below_bits));
-    CHECK(cudaFree(above_index));
-    CHECK(cudaFree(below_index));
+    CHECK(cudaFreeAsync(points_gpu, streams[1]));
+    CHECK(cudaFreeAsync(above_bits, streams[1]));
+    CHECK(cudaFreeAsync(below_bits, streams[1]));
+    CHECK(cudaFreeAsync(above_index, streams[1]));
+    CHECK(cudaFreeAsync(below_index, streams[1]));
+
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
 
 }
 
@@ -444,11 +492,15 @@ void split_stream_point_array_side(Point_array_par* points, Point_array_par* poi
     point_bytes = points->size*sizeof(Point);
 
     // set up memory
-    CHECK(cudaMalloc((Point **)&points_gpu, point_fbytes));
-    CHECK(cudaMalloc((size_t **)&side_bits, array_fbytes));
-    CHECK(cudaMalloc((size_t **)&side_index, array_fbytes+sizeof(size_t)));
+    CHECK(cudaMallocAsync((Point **)&points_gpu, point_fbytes, streams[0]));
+    CHECK(cudaMallocAsync((size_t **)&side_bits, array_fbytes, streams[1]));
+    CHECK(cudaMallocAsync((size_t **)&side_index, array_fbytes+sizeof(size_t), streams[1]));
     
-    CHECK(cudaMemcpy(points_gpu, points->array, point_bytes, cudaMemcpyDeviceToDevice));
+    CHECK(cudaMemcpyAsync(points_gpu, points->array, point_bytes, cudaMemcpyDeviceToDevice, streams[0]));
+
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
 
 
     // set bits in above/below array to 1/0 // 0/1 // 0/0
@@ -468,9 +520,11 @@ void split_stream_point_array_side(Point_array_par* points, Point_array_par* poi
                         
 
     // set up memory for output point arrays
-    CHECK(cudaMalloc((Point **)&temp_side, point_fbytes));
+    CHECK(cudaMallocAsync((Point **)&temp_side, point_fbytes, streams[1]));
 
-    //cpu_side_index = (size_t*)malloc(array_fbytes);
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
 
     // move values
     for(int i = 0; i < array_loop_cnt; i++){
@@ -486,11 +540,19 @@ void split_stream_point_array_side(Point_array_par* points, Point_array_par* poi
     points_side->array = temp_side;
     CHECK(cudaMemcpyAsync(&points_side->size, side_index+array_fsize, sizeof(size_t), cudaMemcpyDeviceToHost, streams[0]));
 
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
 
     // free memory
-    CHECK(cudaFree(points_gpu));
-    CHECK(cudaFree(side_bits));
-    CHECK(cudaFree(side_index));
+    CHECK(cudaFreeAsync(points_gpu, streams[0]));
+    CHECK(cudaFreeAsync(side_bits, streams[1]));
+    CHECK(cudaFreeAsync(side_index, streams[1]));
+
+
+    // Synchronice Kernels
+    cudaStreamSynchronize(streams[0]);
+    cudaStreamSynchronize(streams[1]);
 
 }
 
@@ -510,12 +572,12 @@ __device__ void check_point_location_gpu(Line* l, Point z, int* result){
     
     cross_product_gpu(v1, v2, &cross_result);
 
-    if(cross_result>0){
-        *result = ABOVE;
+    if(fabsf(cross_result) < ZERO_PRECISION){
+        *result = ON;
         return;
     }
-    if(cross_result == 0){
-        *result = ON;
+    if(cross_result>0){
+        *result = ABOVE;
         return;
     }
     *result = BELOW;

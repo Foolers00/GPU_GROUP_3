@@ -54,7 +54,11 @@ Hull_par* quickhull_stream_split_par(Point_array_par* points, Line* l, int side,
 
 void workload_calc(size_t* grid_size, size_t* rem_grid_size, size_t* loop_cnt, size_t* sizef, size_t size);
 
-Point_array_par* generate_random_points_par(int num_of_points, double l_bound, double u_bound);
+Point_array_par* generate_random_points_par(size_t num_of_points, double l_bound, double u_bound);
+
+Point_array_par* generate_random_points_on_circle_par(size_t num_of_points, double radius);
+
+bool find_point_array_par(Point_array_par* points, Point p);
 
 Hull_par* combine_hull_par(Hull_par* hull_1, Hull_par* hull_2);
 

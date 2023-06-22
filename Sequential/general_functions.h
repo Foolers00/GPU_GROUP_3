@@ -48,6 +48,12 @@
 #endif
 
 
+#ifndef OMP
+#define OMP
+#include <omp.h>
+#endif
+
+
 /*
     calculates the hull for the poitns in Point_array
 */
@@ -88,9 +94,13 @@ int check_point_location(Line l, Point z);
 
 /*
     generates a Point array with random values from a lower bound(l_bound) to 
-    an upper bound(u_bound), init_point_array must be called before
+    an upper bound(u_bound), no duplicate points
 */
-Point_array* generate_random_points(int num_of_points, double l_bound, double u_bound);
+Point_array* generate_random_points(size_t num_of_points, double l_bound, double u_bound);
+
+Point_array* generate_random_points_on_circle(size_t num_of_points, double radius);
+
+bool find_point_array(Point_array* points, Point p);
 
 
 /*

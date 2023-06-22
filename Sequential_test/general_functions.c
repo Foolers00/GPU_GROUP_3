@@ -19,6 +19,8 @@ Hull* quickhull(Point_array* points){
     points_on_hull(points, &p, &q);
     l_pq = (Line) { .p = p, .q = q };
 
+    //printf("Line: (%f, %f)-(%f, %f)\n", l_pq.p.x, l_pq.p.y, l_pq.q.x, l_pq.q.y);
+
     hull_up = quickhull_split(points, l_pq, ABOVE);
     hull_down = quickhull_split(points, l_pq, BELOW);
 
@@ -121,9 +123,14 @@ Hull* quickhull_split(Point_array* points, Line l, int side){
         }
     }
 
+    //print_point_array(points_side);
+
     max_point = max_distance(l, points_side);
     l_p_max = (Line) { .p = l.p, .q = max_point };
     l_max_q = (Line) { .p = max_point, .q = l.q };
+
+    // printf("l_p_max: (%f, %f)-(%f, %f)\n", l_p_max.p.x, l_p_max.p.y, l_p_max.q.x, l_p_max.q.y);
+    // printf("l_max_q: (%f, %f)-(%f, %f)\n", l_max_q.p.x, l_max_q.p.y, l_max_q.q.x, l_max_q.q.y);
 
     if(points_side->curr_size == 0) {
         hull_side = init_hull(2);
@@ -162,11 +169,11 @@ int check_point_location(Line l, Point z){
 
     double result = cross_product(init_vector(l.p, l.q), init_vector(l.p, z));
 
+    if(fabs(result) < ZERO_PRECISION){
+        return ON;
+    } 
     if(result>0){
         return ABOVE;
-    }
-    if(result == 0){
-        return ON;
     }
     return BELOW;
 
@@ -197,7 +204,7 @@ void points_on_hull(Point_array* points, Point* p, Point* q){
     Point max;
     Point min;
 
-    max.x = 0;
+    max.x = -DBL_MAX;
     min.x = DBL_MAX;
 
     for(int i = 0; i < points->curr_size; i++){
