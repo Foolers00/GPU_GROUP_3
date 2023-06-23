@@ -513,6 +513,7 @@ void test_split(){
 
     // point array gpu var
     Point_array_par* points_gpu;
+    Point_array_par* points_gpu_gpu;
     Point_array_par* points_above_gpu;
     Point_array_par* points_below_gpu;
     Point_array_par* temp_above;
@@ -542,10 +543,12 @@ void test_split(){
 
     points_cpu = generate_random_points(size, l_bound, u_bound);
     points_gpu = init_point_array_par(size);
+    points_gpu_gpu = init_point_array_par_gpu(points_gpu->size);
     points_thrust.resize(size);
 
     // copy memory to gpu
     memcpy(points_gpu->array, points_cpu->array, sizeof(Point)*size);
+    CHECK(cudaMemcpy(points_gpu_gpu->array, points_gpu->array, points_gpu->size*sizeof(Point), cudaMemcpyHostToDevice));
 
     // copy memory to host thrust
     thrust::copy(&points_cpu->array[0], &points_cpu->array[size], points_thrust.begin());
@@ -596,10 +599,7 @@ void test_split(){
 
     tic = clock();
     // splits array into above and below
-
-    //split_point_array(points_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
-    Point_array_par* points_gpu_gpu = init_point_array_par_gpu(points_gpu->size);
-    CHECK(cudaMemcpy(points_gpu_gpu->array, points_gpu->array, points_gpu->size*sizeof(Point), cudaMemcpyHostToDevice));
+    //split_point_array(points_gpu_gpu, points_above_gpu, points_below_gpu, l_pq_gpu);
     split_point_array_side(points_gpu_gpu, points_above_gpu, l_pq_gpu, ABOVE);
     split_point_array_side(points_gpu_gpu, points_below_gpu, l_pq_gpu, BELOW);
 
