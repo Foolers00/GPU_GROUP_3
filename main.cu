@@ -29,13 +29,14 @@ int main(){
 
     //test_combinehull();
 
-    //test_quickhull();
+    // test_quickhull();
 
     //test_thrust_quickhull();
     
     // test_quickhull_performance();
 
     test_memory_model();
+    test_memory_model_on_circle();
 
     // Print the value of MEMORY_MODEL
     #ifdef MEMORY_MODEL
