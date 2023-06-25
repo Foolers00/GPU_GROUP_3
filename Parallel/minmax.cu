@@ -171,37 +171,3 @@ void minmax_stream_cuda(Point_array_par* points, Line** l_pq, cudaStream_t* stre
 
 
 }
-
-///////////////////////////////////////////////////////////////////////////////
-
-
-//int main(int argc, char** argv){
-//
-//    int size = 100000000;
-//
-//    Point_array_par* points = init_point_array_par(size);
-//
-//    Point left = (Point){.x = -1, .y = 2};
-//    Point middle = (Point){.x = 100, .y = 8};
-//    Point right = (Point){.x = 200, .y = 3};
-//
-//    for(int i = 0; i < size; i++){
-//        if(i == 9000000){
-//            points->array[i] = left;
-//        }else if(i == 1000000){
-//            points->array[i] = right;
-//        }else{
-//            points->array[i] = middle;
-//        }
-//    }
-//
-//    Line* minmax;
-//    minmax_cuda(points, &minmax);
-//
-//    Line minmax_h;
-//    CHECK(cudaMemcpy(&minmax_h, minmax, sizeof(Line), cudaMemcpyDeviceToHost));
-//
-//    printf("minmax:\tp: (%f, %f)\tq: (%f, %f)\n", minmax_h.p.x, minmax_h.p.y, minmax_h.q.x, minmax_h.q.y);
-//
-//    return 0;
-//}
