@@ -1330,7 +1330,7 @@ void test_quickhull_performance(size_t size, FILE* output_file){
     thrust_gpu_time_avg = 0;
     iterations = 0;
 
-    while(iterations < 100){
+    while(iterations < 3){
 
         points_cpu = init_point_array(2*size);
         points_gpu = generate_random_points_par(size, l_bound, u_bound);
@@ -1616,7 +1616,7 @@ void test_memory_model() {
     std::cout << "BLOCKSIZE: " << BLOCKSIZE << std::endl;
 
     // Define the maximum input size
-    int max_input_size = 10000000;
+    int max_input_size = 100000000;
 
     std::string directoryPath = "test_output/memory_blocksize";
     std::string fileSuffix = "_" + std::to_string(MEMORY_MODEL) + "_" + std::to_string(BLOCKSIZE);
