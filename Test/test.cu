@@ -1236,8 +1236,8 @@ void test_quickhull_performance(){
     while(iterations < 3){
 
         points_cpu = init_point_array(2*size);
-        //points_gpu = generate_random_points_par(size, l_bound, u_bound);
-        points_gpu = generate_random_points_on_circle_par(size, 1000);
+        points_gpu = generate_random_points_par(size, l_bound, u_bound);
+        // points_gpu = generate_random_points_on_circle_par(size, 1000);
 
 
         memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
@@ -1387,7 +1387,101 @@ void test_quickhull_performance(size_t size, FILE* output_file){
     CHECK(cudaDeviceReset());
 }
 
+void test_quickhull_performance_on_circle(size_t size, FILE* output_file){
+    // device var
+    int dev;
 
+    // device set up
+    dev = 0;
+    CHECK(cudaSetDevice(dev));
+
+    // clock
+    clock_t tic;
+    clock_t toc;
+    double cpu_time;
+    double gpu_time;
+    double thrust_gpu_time;
+    double cpu_time_avg;
+    double gpu_time_avg;
+    double thrust_gpu_time_avg;
+    int iterations;
+
+    // vars
+    double radius;
+
+    // cpu
+    Point_array* points_cpu;
+    Hull* hull_cpu;
+
+    // gpu / thrust
+    Point_array_par* points_gpu;
+    Hull_par* hull_gpu;
+
+
+    // set vars
+    radius = 10000;
+
+    cpu_time_avg = 0;
+    gpu_time_avg = 0;
+    thrust_gpu_time_avg = 0;
+    iterations = 0;
+
+    while(iterations < 100){
+
+        points_cpu = init_point_array(2*size);
+        points_gpu = generate_random_points_on_circle_par(size, radius);
+
+
+        memcpy(points_cpu->array, points_gpu->array, points_gpu->size*sizeof(Point));
+        points_cpu->curr_size = size;
+
+        // cpu
+        tic = clock();
+        hull_cpu = quickhull(points_cpu);
+        toc = clock();
+        cpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        // gpu
+        tic = clock();
+        hull_gpu = quickhull_par(points_gpu);
+        toc = clock();
+        gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+        // thrust
+        thrust::host_vector<Line> hull_gpu_vec;
+        tic = clock();
+        thrust_quickhull(points_gpu, hull_gpu_vec);
+        toc = clock();
+        thrust_gpu_time = (double)(toc - tic)/CLOCKS_PER_SEC;
+
+
+        // free memory
+        free_point_array(points_cpu);
+        free_point_array_par(points_gpu);
+        free_hull(hull_cpu);
+        free_hull_par(hull_gpu);
+
+        cpu_time_avg += cpu_time;
+        gpu_time_avg += gpu_time;
+        thrust_gpu_time_avg += thrust_gpu_time;
+        iterations++;
+
+    }
+
+    cpu_time_avg/=iterations;
+    gpu_time_avg/=iterations;
+    thrust_gpu_time_avg/=iterations;
+    
+    // printf("CPU time: %f, GPU time: %f, GPU Thrust time: %f\n", cpu_time_avg, 
+    // gpu_time_avg, thrust_gpu_time_avg);
+    fprintf(output_file, "CPU time: %f, GPU time: %f, GPU Thrust time: %f, MEMORY_MODEL: %d, BLOCKSIZE: %d, size: %zu\n",
+        cpu_time_avg, gpu_time_avg, thrust_gpu_time_avg, MEMORY_MODEL, BLOCKSIZE, size);
+
+
+
+    // reset device
+    CHECK(cudaDeviceReset());
+}
 
 void writePointArrayToCSV(Point_array* points){
     FILE *file = fopen("points", "w");
@@ -1547,6 +1641,50 @@ void test_memory_model() {
 
         // Call the function and capture the output
         test_quickhull_performance(size, output_file);
+
+        // fprintf(output_file, "CPU time: %f, GPU time: %f, GPU Thrust time: %f, MEMORY_MODEL: %d, BLOCKSIZE: %d, size: %zu\n",
+        //         cpu_time_avg, gpu_time_avg, thrust_gpu_time_avg, MEMORY_MODEL, BLOCKSIZE, size);
+    
+    }
+
+    fclose(output_file);  // Close the output file
+}
+
+void test_memory_model_on_circle() {
+
+    // // Set up different memory models to test
+    // int memory_models[] = {STD_MEMORY, PINNED_MEMORY, ZERO_MEMORY};
+    // int num_models = sizeof(memory_models) / sizeof(memory_models[0]);
+
+    // Print the value of BLOCKSIZE
+    std::cout << "BLOCKSIZE: " << BLOCKSIZE << std::endl;
+
+    // Define the maximum input size
+    int max_input_size = 10000000;
+
+    std::string directoryPath = "test_output/memory_blocksize_circle";
+    std::string fileSuffix = "_" + std::to_string(MEMORY_MODEL) + "_" + std::to_string(BLOCKSIZE);
+    std::string fileName = directoryPath + "/output" + fileSuffix + ".txt";
+    
+    FILE* output_file = fopen(fileName.c_str(), "w");    
+    if (output_file == NULL) {
+        printf("Error opening output file %s.\n", fileName.c_str());
+        return;
+    }
+
+    // for (int i = 0; i < num_models; i++) {
+    //     // Set MEMORY_MODEL to current memory model
+    //     #undef MEMORY_MODEL
+    //     #define MEMORY_MODEL memory_models[i]
+
+    //     // Perform testing with current memory model
+    //     printf("Testing with MEMORY_MODEL: %d\n", MEMORY_MODEL);
+
+    for (int size = 10; size <= max_input_size; size *= 10) {
+        printf("Testing with input size: %d\n", size);
+
+        // Call the function and capture the output
+        test_quickhull_performance_on_circle(size, output_file);
 
         // fprintf(output_file, "CPU time: %f, GPU time: %f, GPU Thrust time: %f, MEMORY_MODEL: %d, BLOCKSIZE: %d, size: %zu\n",
         //         cpu_time_avg, gpu_time_avg, thrust_gpu_time_avg, MEMORY_MODEL, BLOCKSIZE, size);
