@@ -1225,8 +1225,8 @@ void test_quickhull_performance(){
 
     // set vars
     size = 100000;
-    l_bound = INT_MIN;
-    u_bound = INT_MAX;
+    //l_bound = INT_MIN;
+    //u_bound = INT_MAX;
 
     cpu_time_avg = 0;
     gpu_time_avg = 0;
@@ -1530,7 +1530,7 @@ void test_memory_model() {
     
     FILE* output_file = fopen(fileName.c_str(), "w");    
     if (output_file == NULL) {
-        printf("Error opening output file.\n");
+        printf("Error opening output file %s.\n", fileName.c_str());
         return;
     }
 

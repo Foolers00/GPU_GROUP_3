@@ -120,8 +120,6 @@ Point_array* generate_random_points(size_t num_of_points, double l_bound, double
         add_to_point_array(points, p);        
     }
 
-    printf("Random Point Generation finished\n");
-
     return points;
 }
 
