@@ -147,7 +147,9 @@ void test_thrust_quickhull();
     timing all implementations
 */
 void test_quickhull_performance();
+// void test_quickhull_performance_on_circle();
 void test_quickhull_performance(size_t size, FILE* output_file);
+void test_quickhull_performance_on_circle(size_t size, FILE* output_file);
 
 
 
@@ -155,6 +157,7 @@ void test_quickhull_performance(size_t size, FILE* output_file);
     test_quick_hull_performance with different memory models
 */
 void test_memory_model();
+void test_memory_model_on_circle();
 
 /*
     prints data

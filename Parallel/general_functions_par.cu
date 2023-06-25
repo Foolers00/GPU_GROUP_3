@@ -253,8 +253,6 @@ Point_array_par* generate_random_points_par(size_t num_of_points, double l_bound
         points->array[i] = p;
     }
 
-    printf("Random Point Generation finished\n");
-
     return points;
 }
 

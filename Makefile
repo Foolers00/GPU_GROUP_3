@@ -1,7 +1,13 @@
 .PHONY: all clean
 
+BLOCKSIZE ?= 1024
+MEMORY_MODEL ?= STD_MEMORY
+# Run with make BLOCKSIZE=N
+MEMORY_MODEL ?= 2
+# Run with make BLOCKSIZE=1 2 3 (STD_MEMORY PINNED_MEMORY ZERO_MEMORY)
+
 NVCC=nvcc
-CUDAFLAGS= -std=c++14 -O2 -lineinfo  -Xcompiler -fopenmp
+CUDAFLAGS= -std=c++14 -O2 -lineinfo  -Xcompiler -fopenmp -DBLOCKSIZE=$(BLOCKSIZE) -DMEMORY_MODEL=$(MEMORY_MODEL)
 
 all: prog.out
 
