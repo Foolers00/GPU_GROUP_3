@@ -57,39 +57,3 @@ void thrust_max_distance(thrust::device_vector<Line>& l, thrust::device_vector<P
     assign_max_lines_thrust<<<1, 1>>>(l_ptr, l_p_max_ptr, l_max_q_ptr, max_ptr);
 
 }
-
-
-
-
-
-//int main(int argc, char** argv){
-//    int size = 100000000;
-//
-//    Point_array_par* points = init_point_array_par(size);
-//
-//    Point near = (Point){.x = 1, .y = 2};
-//    Point far = (Point){.x = 1, .y = 22};
-//    Line l = (Line){.p = (Point){.x = 1, .y = 1}, .q = (Point){.x = 1000, .y = 1000}};
-//
-//    for(int i = 0; i < size; i++) {
-//        points->array[i] = near;
-//        if (i == 1230000) points->array[i] = far;
-//    }
-//
-//    thrust::host_vector<Line> l_h(1);
-//    l_h[0] = l;
-//    thrust::device_vector<Line> l_d = l_h;
-//    thrust::device_vector<Line> l_max(2);
-//    thrust::device_vector<Point> d_points(size);
-//    d_points.resize(size);
-//    thrust::copy(&points->array[0], &points->array[size], d_points.begin());
-//    thrust_max_distance(l_d, d_points, l_max);
-//
-//    thrust::host_vector<Line> l_max_h = l_max;
-//
-//
-//    printf("line p_max: (%f, %f) - (%f, %f)\n", static_cast<Line>(l_max_h[0]).p.x, static_cast<Line>(l_max_h[0]).p.y, static_cast<Line>(l_max_h[0]).q.x, static_cast<Line>(l_max_h[0]).q.y);
-//    printf("line max_q: (%f, %f) - (%f, %f)\n", static_cast<Line>(l_max_h[1]).p.x, static_cast<Line>(l_max_h[1]).p.y, static_cast<Line>(l_max_h[1]).q.x, static_cast<Line>(l_max_h[1]).q.y);
-//
-//
-//}

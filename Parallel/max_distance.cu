@@ -161,39 +161,3 @@ void max_distance_stream_cuda(Line* l, Point_array_par* points, Line** l_p_max, 
     CHECK(cudaFreeAsync(d_points_in, streams[0]));
     CHECK(cudaFreeAsync(d_points_out, streams[0]));
 }
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-//int main(int argc, char** argv){
-//    int size = 100000000;
-//
-//    Point_array_par* points = init_point_array_par(size);
-//
-//    Point near = (Point){.x = 1, .y = 2};
-//    Point far = (Point){.x = 1, .y = 8};
-//    Line l = (Line){.p = (Point){.x = 0, .y = 0}, .q = (Point){.x = 1000, .y = 1000}};
-//
-//    for(int i = 0; i < size; i++) {
-//        points->array[i] = near;
-//        if (i == 1234) points->array[i] = far;
-//    }
-//
-//    Line* d_l;
-//    Line* l_p_max, *l_max_q;
-//
-//    CHECK(cudaMalloc((void**)&d_l, sizeof(Line)));
-//    CHECK(cudaMemcpy(d_l, &l, sizeof(Line), cudaMemcpyHostToDevice));
-//    max_distance_cuda(d_l, points, &l_p_max, &l_max_q);
-//
-//    Line l_p_max_host, l_max_q_host;
-//
-//    CHECK(cudaMemcpy(&l_p_max_host, l_p_max, sizeof(Line), cudaMemcpyDeviceToHost));
-//    CHECK(cudaMemcpy(&l_max_q_host, l_max_q, sizeof(Line), cudaMemcpyDeviceToHost));
-//    printf("l_p_max:\tp: (%f, %f)\tq: (%f, %f)\n", l_p_max_host.p.x, l_p_max_host.p.y, l_p_max_host.q.x, l_p_max_host.q.y);
-//    printf("l_max_q:\tp: (%f, %f)\tq: (%f, %f)\n", l_max_q_host.p.x, l_max_q_host.p.y, l_max_q_host.q.x, l_max_q_host.q.y);
-//
-//
-//    return 0;
-//}
